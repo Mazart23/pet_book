@@ -6,7 +6,7 @@
     <img src="github_assets/images/logo.png" alt="Logo" width="200" height="200">
   </a>
   <p align="center">
-    PetBook is a web application for pet owners that facilitates pet recovery and content sharing. With PetBook, users can create profiles for their pets, post content, and, through a QR code linked to their pet's profile, make it easier for others to return lost pets to their owners.
+    PetBook is a web application for pet owners that facilitates pet reunification and content sharing. With PetBook, users can create profiles for their pets, post content, and, through a QR code linked to their pet's profile, make it easier for others to return lost pets to their owners.
   </p>
 </div>
 
