@@ -1,0 +1,46 @@
+version: '3.4'
+
+services:
+
+  controller:
+    build:
+      context: ./controller
+      dockerfile: Dockerfile
+    #restart: always
+    container_name: PB-controller
+    network_mode: "bridge"
+    ports:
+      - "5001:5001"
+    environment:
+      PYTHONUNBUFFERED: 1
+    env_file: "./.env"
+
+  redirecter:
+    build:
+      context: ./redirecter
+      dockerfile: Dockerfile
+    #restart: always
+    container_name: PB-redirecter
+    network_mode: "bridge"
+    ports:
+      - "5002:5002"
+    environment:
+      PYTHONUNBUFFERED: 1
+    env_file: "./.env"
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: PB-client
+    ports:
+      - "3000:3000"
+    environment:
+      - CONTROLLER_PORT=5001
+      - REDIRECTER_PORT=5002
+    logging:
+      #limit logs to 300MB (3 rotations of 100M each)
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
