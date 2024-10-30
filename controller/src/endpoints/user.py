@@ -40,17 +40,14 @@ class Status(Resource):
         return {'status': 'OK'}, 200
     
 # TESTOWANIE BAZY
-@api.route('/user')
+@api.route('/user-data')
 class User(Resource):
-    @api.doc(params={'id': {'description': 'User Identifier', 'example': '671f880f5bf26ed4c9f540fd'}})
-    @api.marshal_with(user_model, code=200, as_list=True)  # Return a list of users
+    @api.doc(params={'id': {'description': 'User Identifier', 'example': '671f880f5bf26ed4c9f540fd', 'required': True}})
+    @api.marshal_with(user_model, code=200, as_list=True)
     @api.response(404, 'User not found')
     def get(self):
         user_id = request.args.get('id')
-        
-        if not user_id:
-            api.abort(400, "User ID is required.")
-        
+
         queries = db()
         
         users = queries.get_user(user_id)

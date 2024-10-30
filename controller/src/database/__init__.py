@@ -25,7 +25,4 @@ class MongoDBConnect:
 
     def find(self, collection_name, query={}, projection=None):
         collection = self.get_collection(collection_name)
-        return collection.find(query, projection)
-
-    def fetch_all(self, cursor):
-        return list(cursor)
+        return list(collection.find(query, projection))
