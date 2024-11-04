@@ -1,0 +1,60 @@
+1. "users" collection
+{
+	"_id": "ObjectId('...')",   -> dodawane automatycznie
+	"username": "...",
+	"email": "...",
+	"password": "...",         -> hashed
+	"bio": "...",
+	"location": {"city": "...", "county":..., "city_part": "..."},    -> osobna kolekcja ??
+	"profile_picture_url": "https://....",
+	"phone_number": "...",
+	"pets": [Pet1{"url_img": "...", }, Pet2{}, ...],
+	"posts": [id_Post1, id_Post2, ...],
+	"comments": [id_Comment1, Comment2, ...],
+	"date_created": "...",
+	"private_settings": True/False,
+	"notifications": [Notif1, Notif2, ...]
+	
+}
+
+2. "posts" collection:
+{
+	"_id": "ObjectId('...')",   -> dodawane automatycznie
+	"_user_id": "ObjectId('...')",
+	"description": "...",
+	"images_urls": ["https://...", "https://...", "..."]
+	"comments": [Comment1, Comment2, ...],
+	"timestamp": "...",
+	"reactions_count": {"likes": number1, "hearts": number2, ...} -> za kazdym razem gdy dodajemy reakcje zwiekszamy count, ale nie trzeba storowac kazdej reakcji osobno w tej kolekcji
+	"location": "..." 
+}
+
+3. "comments" collection:
+{
+	"_id": "ObjectId('...')",   -> dodawane automatycznie
+	"_user_id": "ObjectId('...')",
+	"description": "...",
+	"images_urls": ["https://...", "https://...", "..."]
+	"timestamp": "..."
+}
+
+4."notifications" collection
+{
+	"_id": "ObjectId('...'),   -> dodawane automatycznie
+	"type": "..." // like, heart, comment, qr_scan, ...
+	"_user_id": "ObjectId('...')",
+	"timestamp": "...",
+	// for QR
+	"guest": {
+		"ip": "...",
+		"city": "...",
+		"latitude": "...",
+		"longitude": "..."
+	}
+	// for comment
+	"_comment_id": "ObjectId('...')"
+	// for reactions_count
+	"_post_id": "ObjectId('...')"	
+}
+ 
+
