@@ -1,9 +1,10 @@
 import logging
 
-from ..database.queries import Queries as db 
-
 from flask import request
 from flask_restx import Resource, fields, Namespace
+from flask_jwt_extended import create_access_token
+
+from ..database.queries import Queries as db 
 
 
 log = logging.getLogger('### USER ###')
@@ -23,6 +24,21 @@ user_model = api.model(
     {
         '_id': fields.String(),
         'name': fields.String(),
+    }
+)
+
+login_input_model = api.model(
+    'Login input model',
+    {
+        'username': fields.String(),
+        'password': fields.String(),
+    }
+)
+
+login_output_model = api.model(
+    'Login output model',
+    {
+        'access_token': fields.String()
     }
 )
 
@@ -56,3 +72,20 @@ class User(Resource):
             api.abort(404, "User not found.")
 
         return users, 200
+
+
+@api.route('/login')
+class Login(Resource):
+    @api.expect(login_input_model, validate=True)
+    @api.marshal_with(login_output_model, code=200)
+    @api.response(401, 'Invalid credentials')
+    def post(self):
+        username = request.json.get('username')
+        password = request.json.get('password')
+
+        if not(username == 'test' and password == 'password'):
+            api.abort(401, 'Invalid credentials')
+
+        user_id = '123'
+        access_token = create_access_token(identity=user_id)
+        return {'access_token': access_token}, 200

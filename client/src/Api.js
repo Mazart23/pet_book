@@ -1,11 +1,14 @@
 import axios from 'axios';
 
 
-export function getServerStatus() {
+export function postLogin(username, password) {
   return axios
-    .get(`http://localhost:5001/get`)
+    .post(`http://localhost:5001/user/login`, {
+      username: username,
+      password: password
+    })
     .then(function (response) {
-      return response;
+      return response.data.access_token;
     })
     .catch(function (error) {
       throw error;
