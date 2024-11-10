@@ -5,3 +5,4 @@ Flask_JWT_Extended==4.6.0
 requests==2.32.2
 pyyaml==6.0.2 
 pymongo==4.4.0
+bcrypt==4.2.0

@@ -21,6 +21,13 @@ class MongoDBConnect:
         self.db = self.client[os.environ.get('MONGODB_DATABASE')]
     
     def transaction(func: Callable) -> Callable:
+        '''
+        Decorator to manage MongoDB transactions, ensuring that all database operations
+        within the decorated function are executed entirely or not at all.
+        
+        Adds `session` parameter to function, so please pay attention to provide additional
+        parameter `session` to decorated function (by default set to `None` for example).
+        '''
         def wrapper(self, *args, **kwargs) -> bool:
             session = self.client.start_session()
 
@@ -49,6 +56,10 @@ class MongoDBConnect:
         collection = self.get_collection(collection_name)
         return collection.update_one(filter, new_values, session=session)
 
-    def find(self, collection_name: str, query: dict = {}, projection=None) -> list:
+    def find(self, collection_name: str, filter: dict = {}, projection=None) -> list[dict]:
         collection = self.get_collection(collection_name)
-        return list(collection.find(query, projection))
+        return list(collection.find(filter, projection))
+    
+    def find_one(self, collection_name: str, filter: dict) -> dict:
+        collection = self.get_collection(collection_name)
+        return collection.find_one(filter)

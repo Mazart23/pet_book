@@ -6,7 +6,7 @@ from flask.logging import default_handler
 
 def config_logger(app, level=0):
     handler = TimedRotatingFileHandler('/app/logs/logs.log', when='midnight', backupCount=7)
-    handler.suffix = '%d-%m-%Y.log'
+    handler.prefix = '%d-%m-%Y-'
 
     app.logger.removeHandler(default_handler)
     formatter = logging.Formatter('[%(asctime)s] - [%(name)s] - %(levelname)s: %(message)s')

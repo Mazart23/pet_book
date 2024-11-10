@@ -3,6 +3,7 @@ import logging
 from flask import request
 from flask_restx import Resource, fields, Namespace
 from flask_jwt_extended import create_access_token
+import bcrypt
 
 from ..database.queries import Queries as db 
 
@@ -41,6 +42,15 @@ login_output_model = api.model(
         'access_token': fields.String()
     }
 )
+
+edit_password_model = api.model(
+    'Edit password model',
+    {
+        'username': fields.String(),
+        'current_password': fields.String(),
+        'new_password': fields.String(),
+    }
+)
     
 # TESTOWANIE BAZY
 @api.route('/user-data')
@@ -53,12 +63,16 @@ class User(Resource):
 
         queries = db()
         
-        users = queries.get_user(user_id)
+        user = queries.get_user_by_id(user_id)
 
-        if not users:
+        if not user:
             api.abort(404, "User not found.")
-
-        return users, 200
+        
+        ret_dict = {
+            '_id': user['_id'],
+            'username': user['username']
+        }
+        return ret_dict, 200
 
 
 @api.route('/login')
@@ -67,12 +81,51 @@ class Login(Resource):
     @api.marshal_with(login_output_model, code=200)
     @api.response(401, 'Invalid credentials')
     def post(self):
-        username = request.json.get('username')
-        password = request.json.get('password')
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
 
-        if not(username == 'test' and password == 'password'):
+        queries = db()
+
+        user = queries.get_user_by_username(username)
+        
+        if not user or not bcrypt.checkpw(password.encode('utf-8'), user['hashed_password']):
             api.abort(401, 'Invalid credentials')
-
-        user_id = '123'
-        access_token = create_access_token(identity=user_id)
+        
+        access_token = create_access_token(identity=str(user['_id']))
         return {'access_token': access_token}, 200
+
+@api.route('/edit-password')
+class EditPassword(Resource):
+    @api.expect(edit_password_model, validate=True)
+    @api.response(200, 'OK')
+    @api.response(401, 'Invalid credentials')
+    @api.response(404, 'User not found')
+    @api.response(500, 'Internal Server Error')
+    def post(self):
+        data = request.get_json()
+        
+        username = data.get('username')
+        current_password = data.get('current_password')
+        password = data.get('new_password')
+        
+        queries = db()
+        
+        user = queries.get_user_by_username(username)
+        
+        if not user:
+            api.abort(404, 'User not found')
+            
+        if not bcrypt.checkpw(current_password.encode('utf-8'), user['hashed_password']):
+            api.abort(401, 'Invalid credentials')
+        
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        
+        queries = db()
+        
+        result = queries.user_change_password(user['_id'], hashed_password)
+        
+        if not result:
+            api.abort(500, 'Internal Server Error')
+        
+        return {}, 200
