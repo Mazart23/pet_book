@@ -6,14 +6,14 @@ from flask_restx import Api
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
-# from .blueprint.utils.logs.loger_config import config_logger
+from .utils.logger_config import config_logger
 
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
 
 CORS(app)
-# config_logger(app, DEBUG)
+config_logger(app, DEBUG)
 JWTManager(app)
 
 blueprint = Blueprint('api', __name__)

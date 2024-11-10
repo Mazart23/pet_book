@@ -6,23 +6,16 @@ from flask_restx import Resource, fields, Namespace
 
 from ..database.queries import Queries as db
 from ..utils.request import send_request
-from ..utils.apps import Service
+from ..utils.apps import Services
 
 
-log = logging.getLogger('### QR ###')
+log = logging.getLogger('QR')
 
 api = Namespace('qr')
- 
 
-status_model = api.model(
-    'Status model',
-    {
-        'status': fields.String(),
-    }
-)
 
 guest_model = api.model(
-    'Guest', {
+    'Guest model', {
         'ip': fields.String(required=True, description='IP address of the guest'),
         'city': fields.String(required=True, description='City associated with the IP address'),
         'latitude': fields.String(required=True, description='Latitude coordinate of the IP address'),
@@ -31,33 +24,20 @@ guest_model = api.model(
 )
 
 scan_input_model = api.model(
-    'UserData', {
+    'Scan input model', {
         'user_id': fields.String(required=True, description='Unique ID of the user'),
         'guest': fields.Nested(guest_model, required=True, description='Guest information')
     }
 )
 
-@api.route('/status')
-class Status(Resource):
-    @api.doc(params={'id': {'description': 'Identifier', 'example': '1'}})
-    @api.marshal_with(status_model, code=200)
-    def get(self):
-        id = request.args.get('id')
-        return {'status': 'OK'}, 200
-    @api.expect(status_model, validate=True)
-    @api.marshal_with(status_model, code=200)
-    def post(self):
-        req_data = request.get_json()
-        return {'status': 'OK'}, 200
-
 
 @api.route('/scan')
-class Status(Resource):
+class Scan(Resource):
     @api.expect(scan_input_model, validate=True)
     @api.response(200, 'OK')
     @api.response(500, 'Database Error')
     def post(self):
-        timestamp = datetime.datetime.now()
+        timestamp = str(datetime.datetime.now())
         json_data = request.get_json()
 
         user_id = json_data.get('user_id')
@@ -78,6 +58,10 @@ class Status(Resource):
         send_json = {}
         send_json.update(json_data)
         send_json.update({'timestamp': timestamp})
-        send_request('POST', Service.NOTIFIER, '/emit/scan', json_data=send_json)
-
+        
+        try:
+            send_request('POST', Services.NOTIFIER, '/emit/scan', json_data=send_json)
+        except Exception as e:
+            log.info(f'Error during sending notification for {user_id = } via websocket: {e}')
+            
         return {}, 200

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Udostępnij lokalizację</title>
+</head>
+<body>
+    <h1>Prosimy o udostępnienie lokalizacji, aby umożliwić użytkownikowi {{ username }} zlokalizowanie zwierzęcia</h1>
+    <button onclick="requestLocation()">Udostępnij lokalizację</button>
+
+    <script>
+        const userId = "{{ user_id }}";
+        const username = "{{ username }}";
+        const remoteAddr = "{{ remote_addr }}";
+        const urlRedirect = "{{ url_redirect }}";
+        
+        function redirect(location_msg, send_msg) {
+            alert(`${location_msg}\n${send_msg}\nTrwa przekierowanie na profil...`);
+            window.location = urlRedirect;
+        }
+
+        function notify(isLocationPassed, location_msg, latitude, longitude) {
+            let jsonData;
+
+            if (isLocationPassed === true) {
+                jsonData = {
+                    user_id: userId,
+                    remote_addr: remoteAddr,
+                    is_location_passed: isLocationPassed,
+                    latitude: latitude,
+                    longitude: longitude
+                }
+            } else {
+                jsonData = {
+                    user_id: userId,
+                    remote_addr: remoteAddr,
+                    is_location_passed: isLocationPassed
+                }
+            }
+
+            fetch("http://localhost:5002/pet-book/notify", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(jsonData)
+            })
+                .then(response => {
+                    let send_msg;
+
+                    if (response.status === 200) {
+                        send_msg = "Pomyślnie powiadomiono użytkownika o zeskanowaniu kodu QR.";
+                    } else {
+                        send_msg = "Nie udało się powiadomić użytkownika o zeskanowaniu kodu QR.";
+                    }
+                    
+                    redirect(location_msg, send_msg);
+                })
+                .catch(error => {
+                    send_msg = `Błąd podczas wysyłania powiadomienia o zeskanowaniu kodu QR: ${error.message}`;
+                    redirect(location_msg, send_msg);
+                });
+        }
+
+        function requestLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        notify(true, "Pomyślnie uzyskano lokalizację", latitude, longitude)
+                    },
+                    (error) => {
+                        notify(false, `Nie udało się uzyskać lokalizacji: ${error.message}.`)
+                    }
+                );
+            } else {
+                notify(false, "Geolokalizacja nie jest obsługiwana w tej przeglądarce.")
+            }
+        }
+    </script>
+</body>
+</html>

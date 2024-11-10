@@ -7,7 +7,7 @@ from flask_jwt_extended import create_access_token
 from ..database.queries import Queries as db 
 
 
-log = logging.getLogger('### USER ###')
+log = logging.getLogger('USER')
 
 api = Namespace('user')
  
@@ -23,7 +23,7 @@ user_model = api.model(
     'User model',
     {
         '_id': fields.String(),
-        'name': fields.String(),
+        'username': fields.String(),
     }
 )
 
@@ -41,19 +41,6 @@ login_output_model = api.model(
         'access_token': fields.String()
     }
 )
-
-@api.route('/status')
-class Status(Resource):
-    @api.doc(params={'id': {'description': 'Identifier', 'example': '1'}})
-    @api.marshal_with(status_model, code=200)
-    def get(self):
-        id = request.args.get('id')
-        return {'status': 'OK'}, 200
-    @api.expect(status_model, validate=True)
-    @api.marshal_with(status_model, code=200)
-    def post(self):
-        req_data = request.get_json()
-        return {'status': 'OK'}, 200
     
 # TESTOWANIE BAZY
 @api.route('/user-data')

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import AppRouter from './AppRouter';
-import { WebsocketContext } from './components/context/WebsocketContext';
 import useToken from './components/hooks/useToken';
 import { postLogin } from './Api';
 
 
 export default function App() {
-  const { token, removeToken, setToken } = useToken();
+  const { token, removeToken, setToken } = useToken(null);
   const [ socket, setSocket ] = useState(null);
 
   useEffect(() => {
@@ -17,7 +16,6 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    console.log("Token being sent:", token);
     if (token) {
       const websocket = io('localhost:5003/', {
         query: {token: token}, 
@@ -25,6 +23,7 @@ export default function App() {
         cors: {
           origin: "http://localhost:3000/",
         },
+        timeout: 5000
       });
 
       setSocket(websocket);
@@ -46,9 +45,7 @@ export default function App() {
   return (
     <>
       { socket ? (
-        <WebsocketContext.Provider value={socket}>
           <AppRouter />
-        </WebsocketContext.Provider>
       ) : (
         <h1>Waiting</h1>
       )}

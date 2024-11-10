@@ -6,7 +6,7 @@ from flask_restx import Resource, fields, Namespace
 from ..utils.websocket import Websocket 
 
 
-log = logging.getLogger('### EMIT ###')
+log = logging.getLogger('EMIT')
 
 api = Namespace('emit')
 

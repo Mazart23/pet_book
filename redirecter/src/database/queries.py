@@ -1,7 +1,10 @@
-from typing import List, Dict
+import logging
 from bson.objectid import ObjectId
 
 from . import MongoDBConnect
+
+
+log = logging.getLogger('QUERIES')
 
 
 class Queries(MongoDBConnect):
@@ -9,11 +12,11 @@ class Queries(MongoDBConnect):
     def get_username(self, id: str) -> str | None:
         try:
             query = {'_id': ObjectId(id)}
-            result = self.find_one("users", query)
+            result = self.find_one('users', query)
             if result:
-                return result['name']
+                return result['username']
             else:
                 return None
         except Exception as e:
-            print(f"Error fetching user: {e}")
-            return []
+            log.error(f'Error fetching user: {e}')
+            return None
