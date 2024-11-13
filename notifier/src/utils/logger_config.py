@@ -1,0 +1,21 @@
+import logging 
+from logging.handlers import TimedRotatingFileHandler
+
+from flask.logging import default_handler
+
+
+def config_logger(app, level=0):
+    handler = TimedRotatingFileHandler('/app/logs/logs.log', when='midnight', backupCount=7)
+    handler.prefix = '%d-%m-%Y-.log'
+
+    app.logger.removeHandler(default_handler)
+    formatter = logging.Formatter('[%(asctime)s] - [%(name)s] - %(levelname)s: %(message)s')
+
+    handler.setFormatter(formatter)
+    app.logger.root.addHandler(handler)
+    app.logger.root.setLevel(level)
+    app.logger.setLevel(logging.ERROR)
+    logger = logging.getLogger('werkzeug')
+    logger.setLevel(level)
+    logger_socketio = logging.getLogger('socketio')
+    logger_socketio.setLevel(level)

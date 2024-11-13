@@ -1,18 +1,22 @@
-from typing import List
+import logging
+from bson.objectid import ObjectId
 
-from . import MysqlConnect
+from . import MongoDBConnect
 
 
-class Queries(MysqlConnect):
+log = logging.getLogger('QUERIES')
 
-    def select_users(self, id: str) -> List[tuple]:
-        sql = '''
-            SELECT (name, phone_number)
-            FROM users u
-            WHERE u.id = %s;
-        '''
-        self.cur.execute(sql, [id])
-        data = self.cur.fetchall()
 
-        return data
-        
+class Queries(MongoDBConnect):
+
+    def get_username(self, id: str) -> str | None:
+        try:
+            query = {'_id': ObjectId(id)}
+            result = self.find_one('users', query)
+            if result:
+                return result['username']
+            else:
+                return None
+        except Exception as e:
+            log.error(f'Error fetching user: {e}')
+            return None

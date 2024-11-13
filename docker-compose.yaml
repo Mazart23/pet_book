@@ -1,4 +1,8 @@
-version: '3.4'
+version: '3.8'
+
+networks:
+  petbook_network:
+    driver: bridge
 
 services:
 
@@ -8,12 +12,18 @@ services:
       dockerfile: Dockerfile
     #restart: always
     container_name: PB-controller
-    network_mode: "bridge"
-    ports:
-      - "5001:5001"
     environment:
       PYTHONUNBUFFERED: 1
-    env_file: "./.env"
+    networks:
+      - petbook_network
+    ports:
+      - "5001:5001"
+    env_file:
+      - "./db.env"
+      - "./controller/jwt.env"
+    volumes:
+      - "./apps.yaml:/app/config/apps.yaml"
+      - "./controller/logs:/app/logs"
 
   redirecter:
     build:
@@ -21,23 +31,45 @@ services:
       dockerfile: Dockerfile
     #restart: always
     container_name: PB-redirecter
-    network_mode: "bridge"
-    ports:
-      - "5002:5002"
     environment:
       PYTHONUNBUFFERED: 1
-    env_file: "./.env"
+    networks:
+      - petbook_network
+    ports:
+      - "5002:5002"
+    env_file:
+      - "./db.env"
+    volumes:
+      - "./apps.yaml:/app/config/apps.yaml"
+      - "./redirecter/logs:/app/logs"
+
+  notifier:
+    build:
+      context: ./notifier
+      dockerfile: Dockerfile
+    #restart: always
+    container_name: PB-notifier
+    environment:
+      PYTHONUNBUFFERED: 1
+    networks:
+      - petbook_network
+    ports:
+      - "5003:5003"
+    env_file:
+      - "./notifier/jwt.env"
+    volumes:
+      - "./apps.yaml:/app/config/apps.yaml"
+      - "./notifier/logs:/app/logs"
 
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
     container_name: PB-client
+    networks:
+      - petbook_network
     ports:
       - "3000:3000"
-    environment:
-      - CONTROLLER_PORT=5001
-      - REDIRECTER_PORT=5002
     logging:
       #limit logs to 300MB (3 rotations of 100M each)
       driver: "json-file"

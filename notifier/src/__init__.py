@@ -6,25 +6,26 @@ from flask_restx import Api
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
+from .utils.websocket import Websocket
 from .utils.logger_config import config_logger
 
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
 
-CORS(app)
+CORS(app, resources={r"/*":{"origins":"*"}})
 config_logger(app, DEBUG)
 JWTManager(app)
 
 blueprint = Blueprint('api', __name__)
-api = Api(blueprint, version = '1.0.0', title = 'PetBook Controller API')
+api = Api(blueprint, version = '1.0.0', title = 'PetBook Notifier API')
+
+socketio = Websocket(app)
 
 
-from .endpoints.user import api as user
-from .endpoints.qr_code import api as qr_code
+from .endpoints.emit import api as http
 
 
-api.add_namespace(user)
-api.add_namespace(qr_code)
+api.add_namespace(http)
 
 app.register_blueprint(blueprint)
