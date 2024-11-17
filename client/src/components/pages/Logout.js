@@ -1,5 +1,5 @@
 import React from "react";
-import useToken from '../contexts/TokenContext';
+import useToken from "../contexts/TokenContext";
 
 const Logout = () => {
   const { removeToken } = useToken();

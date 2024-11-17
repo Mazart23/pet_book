@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass
 
 import yaml
@@ -13,13 +12,13 @@ class Service:
 
     @classmethod
     def load(cls, service: str):
-        with open("/app/config/apps.yaml", "r") as file:
-            config = yaml.safe_load(file)
+        with open('/app/config/apps.yaml', 'r') as file:
+            config = yaml.safe_load(file)['services'][service]
         return cls(
-            http=config['services'][service]['http'],
-            ip_host=config['services'][service]['ip_host'],
-            ip=config['services'][service]['ip'],
-            port=config['services'][service]['port']
+            http=config['http'],
+            ip_host=config['ip_host'],
+            ip=config['ip'],
+            port=config['port']
         )
 
 class Services:

@@ -20,7 +20,7 @@ class Websocket(metaclass=SingletonMeta):
         connected_users - states of users: True - connected, False - disconnected
         '''
         service = Services.CLIENT
-        self.app = SocketIO(app, cors_allowed_origins=f"{service.http}://{service.ip_host}:{service.port}")
+        self.app = SocketIO(app, cors_allowed_origins=f'{service.http}://{service.ip_host}:{service.port}', logger=True, engineio_logger=True)
 
         self.connected_users = {}
         self.users_lock = Lock()
