@@ -6,16 +6,16 @@ const useToken = () => useContext(TokenContext);
 
 export const TokenProvider = ({ children }) => {
   const [token, setToken] = useState(() => {
-    return localStorage.getItem("token") || null;
+    return sessionStorage.getItem("token") || null;
   });
 
   const saveToken = (newToken) => {
-    localStorage.setItem("token", newToken);
+    sessionStorage.setItem("token", newToken);
     setToken(newToken);
   };
 
   const removeToken = () => {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setToken(null);
   };
 

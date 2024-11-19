@@ -15,7 +15,9 @@ def config_logger(app, level=0):
     app.logger.root.addHandler(handler)
     app.logger.root.setLevel(level)
     app.logger.setLevel(logging.ERROR)
-    logger = logging.getLogger('werkzeug')
-    logger.setLevel(level)
-    logger_socketio = logging.getLogger('socketio')
-    logger_socketio.setLevel(level)
+    
+    werkzeug_logger = logging.getLogger('werkzeug')
+    werkzeug_logger.setLevel(level)
+    
+    socketio_logger = logging.getLogger('socketio')
+    socketio_logger.setLevel(level)

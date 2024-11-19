@@ -1,9 +1,14 @@
 import axios from "axios";
+import { services, servicesWait } from "./utils/loadServices";
 
+/*
+API async functions below
+*/
 
-export function postLogin(username, password) {
+export async function postLogin(username, password) {
+  await servicesWait();
   return axios
-    .post(`http://localhost:5001/user/login`, {
+    .post(`${services.controller.url}/user/login`, {
       username: username,
       password: password
     })
