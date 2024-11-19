@@ -19,3 +19,19 @@ export async function postLogin(username, password) {
       throw error;
     });
 }
+
+export async function getGeneratedQr(token) {
+  await servicesWait();
+  return axios
+    .get(`${services.controller.url}/qr/generator`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    .then(function (response) {
+      return response.data.qr;
+    })
+    .catch(function (error) {
+      throw error;
+    });
+}
