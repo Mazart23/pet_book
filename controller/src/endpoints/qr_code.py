@@ -35,6 +35,7 @@ scan_input_model = api.model(
 class Scan(Resource):
     @api.expect(scan_input_model, validate=True)
     @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
     @api.response(500, 'Database Error')
     def post(self):
         timestamp = str(datetime.datetime.now())

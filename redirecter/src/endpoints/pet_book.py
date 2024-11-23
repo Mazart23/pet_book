@@ -1,6 +1,6 @@
 import logging
 
-from flask import request, redirect, render_template, make_response
+from flask import request, render_template, make_response
 from flask_restx import Resource, fields, Namespace
 import requests
 import geocoder
@@ -38,6 +38,8 @@ redirect_model = api.model(
 @api.route('/')
 class AccessPoint(Resource):
     @api.doc(params={'id': {'description': 'User Identifier', 'example': '671f880f5bf26ed4c9f540fd', 'required': True}})
+    @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
     @api.response(404, 'User not found')
     def get(self):
         user_id = request.args.get('id')
@@ -51,10 +53,13 @@ class AccessPoint(Resource):
         
         remote_addr = request.remote_addr
         
+        post_to = Services.REDIRECTER
+        url_post = f'{post_to.http}://{post_to.ip_host}:{post_to.port}/pet-book/notify'
+
         redirection_to = Services.CLIENT
         url_redirect = f'{redirection_to.http}://{redirection_to.ip_host}:{redirection_to.port}/profile/{username}'
     
-        response = make_response(render_template('locationAsk.html', user_id=user_id, username=username, remote_addr=remote_addr, url_redirect=url_redirect))
+        response = make_response(render_template('locationAsk.html', user_id=user_id, username=username, remote_addr=remote_addr, url_post=url_post, url_redirect=url_redirect))
         response.headers['Content-Type'] = 'text/html'
         return response
 
@@ -63,6 +68,7 @@ class AccessPoint(Resource):
 class Notify(Resource):
     @api.expect(redirect_model, validate=True)
     @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
     @api.response(500, 'Internal Server Error / Request Error')
     def post(self):
         data = request.get_json()
