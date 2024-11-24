@@ -16,6 +16,7 @@
     const userId = "{{ user_id }}";
     const username = "{{ username }}";
     const remoteAddr = "{{ remote_addr }}";
+    const urlPost = "{{ url_post }}";
     const urlRedirect = "{{ url_redirect }}";
     
     function redirect(location_msg, send_msg) {
@@ -42,7 +43,7 @@
         }
       }
 
-      fetch("http://localhost:5002/pet-book/notify", {
+      fetch(urlPost, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

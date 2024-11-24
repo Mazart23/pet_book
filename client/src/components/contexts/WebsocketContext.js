@@ -30,7 +30,15 @@ export const WebsocketProvider = ({ children }) => {
       });
 
       websocket.on("notification_scan", (data) => {
-        console.log(data);
+        console.log("Scan", data);
+      });
+
+      websocket.on("notification_reaction", (data) => {
+        console.log("Reaction", data);
+      });
+
+      websocket.on("notification_comment", (data) => {
+        console.log("Comment", data);
       });
 
       return () => {

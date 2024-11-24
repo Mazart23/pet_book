@@ -33,6 +33,8 @@ services_output_model = api.model(
 @api.route('/services')
 class ServicesConfig(Resource):
     @api.marshal_with(services_output_model, code=200)
+    @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
     @api.response(500, 'Internal Server Error')
     def get(self):
         service_list = []

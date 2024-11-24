@@ -2,7 +2,7 @@ import logging
 
 from flask import request
 from flask_restx import Resource, fields, Namespace
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required
 import bcrypt
 
 from ..database.queries import Queries as db 
@@ -51,10 +51,34 @@ edit_password_model = api.model(
         'new_password': fields.String(),
     }
 )
-    
+
+
+@api.route('/')
+class User(Resource):
+    def get(self):
+        '''
+        fetch
+        '''
+
+    def put(self):
+        '''
+        create
+        '''
+
+    def patch(self):
+        '''
+        edit
+        '''
+
+    def delete(self):
+        '''
+        delete
+        '''
+
+
 # TESTOWANIE BAZY
 @api.route('/user-data')
-class User(Resource):
+class UserData(Resource):
     @api.doc(params={'id': {'description': 'User Identifier', 'example': '671f880f5bf26ed4c9f540fd', 'required': True}})
     @api.marshal_with(user_model, code=200, as_list=True)
     @api.response(404, 'User not found')
@@ -79,6 +103,8 @@ class User(Resource):
 class Login(Resource):
     @api.expect(login_input_model, validate=True)
     @api.marshal_with(login_output_model, code=200)
+    @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
     @api.response(401, 'Invalid credentials')
     def post(self):
         data = request.get_json()
@@ -95,14 +121,16 @@ class Login(Resource):
         access_token = create_access_token(identity=str(user['_id']))
         return {'access_token': access_token}, 200
 
-@api.route('/edit-password')
-class EditPassword(Resource):
+
+@api.route('/password')
+class Password(Resource):
     @api.expect(edit_password_model, validate=True)
     @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
     @api.response(401, 'Invalid credentials')
     @api.response(404, 'User not found')
     @api.response(500, 'Internal Server Error')
-    def post(self):
+    def patch(self):
         data = request.get_json()
         
         username = data.get('username')

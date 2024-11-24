@@ -23,10 +23,16 @@ api = Api(blueprint, version = '1.0.0', title = 'PetBook Controller API')
 from .endpoints.user import api as user
 from .endpoints.qr_code import api as qr_code
 from .endpoints.config import api as config
+from .endpoints.post import api as post
+from .endpoints.comment import api as comment
+from .endpoints.reaction import api as reaction
 
 
 api.add_namespace(user)
 api.add_namespace(qr_code)
 api.add_namespace(config)
+api.add_namespace(post)
+api.add_namespace(comment)
+api.add_namespace(reaction)
 
 app.register_blueprint(blueprint)
