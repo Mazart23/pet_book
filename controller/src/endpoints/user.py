@@ -1,8 +1,11 @@
 import logging
+import os
+
+import requests
 
 from flask import request
 from flask_restx import Resource, fields, Namespace
-from flask_jwt_extended import create_access_token, jwt_required
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import bcrypt
 
 from ..database.queries import Queries as db 
@@ -156,4 +159,91 @@ class Password(Resource):
         if not result:
             api.abort(500, 'Internal Server Error')
         
+        return {}, 200
+    
+@api.route('/user-picture')
+class UserPicture(Resource):
+    @jwt_required()
+    def get(self):
+        '''
+        fetch user's profile picture url
+        '''
+        user_id = get_jwt_identity()
+        queries = db()
+        user = queries.get_user_by_id(user_id)
+        if not user:
+            api.abort(404, "User not found")
+
+        return {"profile_picture_url": user.get("profile_picture_url", None)}, 200
+
+    @jwt_required()
+    def put(self):
+        '''
+        Set or update user's profile picture
+        '''
+        user_id = get_jwt_identity()
+        queries = db()
+        
+        try:
+            # Log the start of the request
+            log.info(f"Received request to update profile picture for user {user_id}")
+
+            user = queries.get_user_by_id(user_id)
+            if not user:
+                log.warning(f"User with ID {user_id} not found.")
+                api.abort(404, "User not found")
+
+            if 'picture' not in request.files:
+                log.warning(f"No picture file provided in request for user {user_id}")
+                api.abort(400, "No picture file provided")
+            
+            picture = request.files['picture']
+
+            # Upload to Imgur
+            log.info("Uploading picture to Imgur...")
+            headers = {"Authorization": f"Client-ID {os.environ.get('IMGUR_CLIENT_ID')}"}
+            response = requests.post(
+                os.environ.get('IMGUR_API_URL'),
+                headers=headers,
+                files={"image": picture}
+            )
+
+            if response.status_code != 200:
+                log.error(f"Imgur upload failed with status code {response.status_code}: {response.text}")
+                api.abort(500, "Failed to upload image to Imgur")
+
+            imgur_data = response.json()
+            new_picture_url = imgur_data['data']['link']
+            log.info(f"Imgur upload successful. New URL: {new_picture_url}")
+
+            # Update the database
+            result = queries.update_user_picture(user_id, new_picture_url)
+            if not result:
+                log.error(f"Failed to update profile picture for user {user_id} in database.")
+                api.abort(500, "Failed to update user profile picture")
+            
+            log.info(f"Profile picture updated successfully for user {user_id}")
+            return {"profile_picture_url": new_picture_url}, 200
+
+        except Exception as e:
+            log.error(f"Unexpected error updating profile picture for user {user_id}: {e}")
+            api.abort(500, "An unexpected error occurred.")
+
+    @jwt_required()
+    def delete(self):
+        """
+        delete user's profile picture
+        """
+        user_id = get_jwt_identity()
+        queries = db()
+        user = queries.get_user_by_id(user_id)
+
+        if not user:
+            api.abort(404, "User not found")
+
+        
+        result = queries.update_user_picture(user_id, None)
+        if not result:
+            api.abort(500, "Failed to delete user profile picture")
+
         return {}, 200
