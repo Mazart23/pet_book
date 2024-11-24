@@ -1,6 +1,10 @@
 import React, { useState, useRef } from "react";
-import axios from "axios";
 import useToken from "../contexts/TokenContext";
+import {
+  fetchProfilePicture,
+  uploadProfilePicture,
+  deleteProfilePicture,
+} from "/client/src/Api";
 
 const Profile = () => {
   const [profilePicture, setProfilePicture] = useState(null);
@@ -13,8 +17,6 @@ const Profile = () => {
   const fadeTimeout = useRef(null);
   const { token } = useToken();
 
-  const API_BASE_URL = "http://localhost:5001"; 
-
   const fadeCycle = () => {
     fadeTimeout.current = setTimeout(() => {
       setAnimationClass("animate__fadeOutUp");
@@ -26,30 +28,34 @@ const Profile = () => {
     }, 3000);
   };
 
-  const fetchProfilePicture = async () => {
+  const handleFetchProfilePicture = async () => {
     clearTimeout(fadeTimeout.current);
     setError("");
     setSuccessMessage("");
     setShowMessage(false);
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/user/user-picture`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setProfilePicture(response.data.profile_picture_url);
+      if (!token) {
+        const authError = {
+          status: 401,
+          message: "User is not authenticated. Please log in.",
+        };
+        throw authError; 
+      }
+      const profileUrl = await fetchProfilePicture(token);
+      setProfilePicture(profileUrl);
       setSuccessMessage("Profile picture fetched successfully!");
       setShowMessage(true);
       fadeCycle();
     } catch (error) {
-      setError(`Failed to fetch profile picture: ${error.message}`);
+      const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
+      setError(`Failed to fetch profile picture: ${errorMsg}`);
       setShowMessage(true);
       fadeCycle();
     }
   };
 
-  const uploadProfilePicture = async () => {
+  const handleUploadProfilePicture = async () => {
     if (!selectedFile) {
       setError("Please select a file before uploading.");
       setShowMessage(true);
@@ -62,45 +68,42 @@ const Profile = () => {
     setSuccessMessage("");
     setShowMessage(false);
 
-    const formData = new FormData();
-    formData.append("picture", selectedFile);
-
     try {
-      const response = await axios.put(`${API_BASE_URL}/user/user-picture`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      setProfilePicture(response.data.profile_picture_url);
+      if (!token) {
+        const authError = {
+          status: 401,
+          message: "User is not authenticated. Please log in.",
+        };
+        throw authError; 
+      }
+      const profileUrl = await uploadProfilePicture(token, selectedFile);
+      setProfilePicture(profileUrl);
       setSuccessMessage("Profile picture updated successfully!");
       setShowMessage(true);
       fadeCycle();
     } catch (error) {
-      setError(`Failed to upload profile picture: ${error.message}`);
+      const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
+      setError(`Failed to upload profile picture: ${errorMsg}`);
       setShowMessage(true);
       fadeCycle();
     }
   };
 
-  const deleteProfilePicture = async () => {
+  const handleDeleteProfilePicture = async () => {
     clearTimeout(fadeTimeout.current);
     setError("");
     setSuccessMessage("");
     setShowMessage(false);
 
     try {
-      await axios.delete(`${API_BASE_URL}/user/user-picture`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await deleteProfilePicture(token);
       setProfilePicture(null);
       setSuccessMessage("Profile picture deleted successfully!");
       setShowMessage(true);
       fadeCycle();
     } catch (error) {
-      setError(`Failed to delete profile picture: ${error.message}`);
+      const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
+      setError(`Failed to delete profile picture: ${errorMsg}`);
       setShowMessage(true);
       fadeCycle();
     }
@@ -128,17 +131,17 @@ const Profile = () => {
         )}
       </div>
 
-      <button onClick={fetchProfilePicture}>Fetch Profile Picture</button>
+      <button onClick={handleFetchProfilePicture}>Fetch Profile Picture</button>
 
       <div>
         <input type="file" onChange={handleFileChange} />
-        <button onClick={uploadProfilePicture} disabled={!selectedFile}>
+        <button onClick={handleUploadProfilePicture} disabled={!selectedFile}>
           Upload/Update Profile Picture
         </button>
       </div>
 
       {profilePicture && (
-        <button onClick={deleteProfilePicture}>Delete Profile Picture</button>
+        <button onClick={handleDeleteProfilePicture}>Delete Profile Picture</button>
       )}
 
       {showMessage && (

@@ -3,7 +3,7 @@ import os
 
 import requests
 
-from flask import request
+from flask import request, jsonify
 from flask_restx import Resource, fields, Namespace
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import bcrypt
@@ -11,10 +11,10 @@ import bcrypt
 from ..database.queries import Queries as db 
 
 
+
 log = logging.getLogger('USER')
 
 api = Namespace('user')
- 
 
 status_model = api.model(
     'Status model',
@@ -185,7 +185,6 @@ class UserPicture(Resource):
         queries = db()
         
         try:
-            # Log the start of the request
             log.info(f"Received request to update profile picture for user {user_id}")
 
             user = queries.get_user_by_id(user_id)
@@ -199,7 +198,6 @@ class UserPicture(Resource):
             
             picture = request.files['picture']
 
-            # Upload to Imgur
             log.info("Uploading picture to Imgur...")
             headers = {"Authorization": f"Client-ID {os.environ.get('IMGUR_CLIENT_ID')}"}
             response = requests.post(
@@ -216,7 +214,6 @@ class UserPicture(Resource):
             new_picture_url = imgur_data['data']['link']
             log.info(f"Imgur upload successful. New URL: {new_picture_url}")
 
-            # Update the database
             result = queries.update_user_picture(user_id, new_picture_url)
             if not result:
                 log.error(f"Failed to update profile picture for user {user_id} in database.")
