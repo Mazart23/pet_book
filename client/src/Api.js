@@ -24,7 +24,7 @@ export async function fetchProfilePicture(token) {
   await servicesWait();
 
   return axios
-    .get(`${API_BASE_URL}/user-picture`, {
+    .get(`${services.controller.url}/user/user-picture`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -42,7 +42,7 @@ export async function uploadProfilePicture(token, selectedFile) {
   formData.append("picture", selectedFile);
 
   return axios
-    .put(`${API_BASE_URL}/user-picture`, formData, {
+    .put(`${services.controller.url}/user/user-picture`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data",
@@ -58,7 +58,7 @@ export async function deleteProfilePicture(token) {
   await servicesWait();
 
   return axios
-    .delete(`${API_BASE_URL}/user-picture`, {
+    .delete(`${services.controller.url}/user/user-picture`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

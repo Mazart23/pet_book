@@ -179,7 +179,7 @@ class UserPicture(Resource):
     @jwt_required()
     def put(self):
         '''
-        Set or update user's profile picture
+        set or update user's profile picture
         '''
         user_id = get_jwt_identity()
         queries = db()
