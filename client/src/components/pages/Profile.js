@@ -5,6 +5,7 @@ import {
   uploadProfilePicture,
   deleteProfilePicture,
 } from "/client/src/Api";
+import jwtDecode from "jwt-decode";
 
 const Profile = () => {
   const [profilePicture, setProfilePicture] = useState(null);
@@ -33,7 +34,7 @@ const Profile = () => {
     setError("");
     setSuccessMessage("");
     setShowMessage(false);
-
+  
     try {
       if (!token) {
         const authError = {
@@ -42,7 +43,15 @@ const Profile = () => {
         };
         throw authError; 
       }
-      const profileUrl = await fetchProfilePicture(token);
+  
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.sub; 
+  
+      if (!userId) {
+        throw new Error("Invalid token: User ID is missing.");
+      }
+
+      const profileUrl = await fetchProfilePicture(userId);
       setProfilePicture(profileUrl);
       setSuccessMessage("Profile picture fetched successfully!");
       setShowMessage(true);
@@ -54,6 +63,7 @@ const Profile = () => {
       fadeCycle();
     }
   };
+  
 
   const handleUploadProfilePicture = async () => {
     if (!selectedFile) {

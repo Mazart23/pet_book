@@ -163,12 +163,26 @@ class Password(Resource):
     
 @api.route('/user-picture')
 class UserPicture(Resource):
-    @jwt_required()
+    @api.doc(
+        description="Fetch the profile picture URL of a user by their ID.",
+        params={
+            "user_id": {"description": "The ID of the user whose profile picture URL is to be fetched.", "example": "671f880f5bf26ed4c9f540fd", "required": True}
+        },
+        responses={
+            200: "OK",
+            404: "User not found",
+            400: "User ID not provided"
+        }
+    )
     def get(self):
         '''
-        fetch user's profile picture url
+        Fetch the profile picture URL of a user by their ID.
         '''
-        user_id = get_jwt_identity()
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            api.abort(400, "User ID not provided")
+        
         queries = db()
         user = queries.get_user_by_id(user_id)
         if not user:
@@ -177,13 +191,27 @@ class UserPicture(Resource):
         return {"profile_picture_url": user.get("profile_picture_url", None)}, 200
 
     @jwt_required()
+    @api.doc(
+        description="Set or update the authenticated user's profile picture. Requires a file upload (key: 'picture').",
+        consumes=["multipart/form-data"],
+        params={
+            "picture": {"description": "The new profile picture file.", "type": "file", "required": True}
+        },
+        responses={
+            200: "OK",
+            400: "No picture file provided",
+            404: "User not found",
+            401: "Unauthorized",
+            500: "Failed to upload image or update profile picture"
+        }
+    )
     def put(self):
         '''
-        set or update user's profile picture
+        Set or update the authenticated user's profile picture.
         '''
         user_id = get_jwt_identity()
         queries = db()
-        
+
         try:
             log.info(f"Received request to update profile picture for user {user_id}")
 
@@ -227,9 +255,18 @@ class UserPicture(Resource):
             api.abort(500, "An unexpected error occurred.")
 
     @jwt_required()
+    @api.doc(
+        description="Delete the authenticated user's profile picture.",
+        responses={
+            200: "OK",
+            404: "User not found",
+            401: "Unauthorized",
+            500: "Failed to delete user profile picture"
+        }
+    )
     def delete(self):
         """
-        delete user's profile picture
+        Delete the authenticated user's profile picture.
         """
         user_id = get_jwt_identity()
         queries = db()
@@ -238,7 +275,6 @@ class UserPicture(Resource):
         if not user:
             api.abort(404, "User not found")
 
-        
         result = queries.update_user_picture(user_id, None)
         if not result:
             api.abort(500, "Failed to delete user profile picture")

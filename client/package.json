@@ -18,7 +18,8 @@
       "socket.io": "^4.5.1",
       "socket.io-client": "^4.5.1",
       "web-vitals": "^2.1.4",
-      "animate.css": "^4.1.1"
+      "animate.css": "^4.1.1",
+      "jwt-decode": "^3.1.2"
     },
     "scripts": {
       "start": "react-scripts start",

@@ -20,14 +20,12 @@ export async function postLogin(username, password) {
     });
 }
 
-export async function fetchProfilePicture(token) {
+export async function fetchProfilePicture(userId) {
   await servicesWait();
-
+  
   return axios
     .get(`${services.controller.url}/user/user-picture`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      params: { user_id: userId }, 
     })
     .then((response) => response.data.profile_picture_url)
     .catch((error) => {
