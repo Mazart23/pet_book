@@ -29,95 +29,105 @@ const Profile = () => {
     }, 3000);
   };
 
-  const handleFetchProfilePicture = async () => {
+  const handleFetchProfilePicture = () => {
     clearTimeout(fadeTimeout.current);
     setError("");
     setSuccessMessage("");
     setShowMessage(false);
   
-    try {
-      if (!token) {
-        const authError = {
-          status: 401,
-          message: "User is not authenticated. Please log in.",
-        };
-        throw authError; 
-      }
-  
-      const decodedToken = jwtDecode(token);
-      const userId = decodedToken.sub; 
-  
-      if (!userId) {
-        throw new Error("Invalid token: User ID is missing.");
-      }
-
-      const profileUrl = await fetchProfilePicture(userId);
-      setProfilePicture(profileUrl);
-      setSuccessMessage("Profile picture fetched successfully!");
+    if (!token) {
+      setError("User is not authenticated. Please log in.");
       setShowMessage(true);
       fadeCycle();
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
-      setError(`Failed to fetch profile picture: ${errorMsg}`);
-      setShowMessage(true);
-      fadeCycle();
+      return;
     }
+  
+    let userId;
+    try {
+      const decodedToken = jwtDecode(token);
+      userId = decodedToken.sub;
+      if (!userId) throw new Error("Invalid token: User ID is missing.");
+    } catch (err) {
+      setError(`Failed to decode token: ${err.message}`);
+      setShowMessage(true);
+      fadeCycle();
+      return;
+    }
+  
+    fetchProfilePicture(userId)
+      .then((profileUrl) => {
+        setProfilePicture(profileUrl);
+        setSuccessMessage("Profile picture fetched successfully!");
+        setShowMessage(true);
+        fadeCycle();
+      })
+      .catch((error) => {
+        const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
+        setError(`Failed to fetch profile picture: ${errorMsg}`);
+        setShowMessage(true);
+        fadeCycle();
+      });
   };
   
+  
 
-  const handleUploadProfilePicture = async () => {
+  const handleUploadProfilePicture = () => {
     if (!selectedFile) {
       setError("Please select a file before uploading.");
       setShowMessage(true);
       fadeCycle();
       return;
     }
-
+  
     clearTimeout(fadeTimeout.current);
     setError("");
     setSuccessMessage("");
     setShowMessage(false);
-
-    try {
-      if (!token) {
-        const authError = {
-          status: 401,
-          message: "User is not authenticated. Please log in.",
-        };
-        throw authError; 
-      }
-      const profileUrl = await uploadProfilePicture(token, selectedFile);
-      setProfilePicture(profileUrl);
-      setSuccessMessage("Profile picture updated successfully!");
+  
+    if (!token) {
+      setError("User is not authenticated. Please log in.");
       setShowMessage(true);
       fadeCycle();
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
-      setError(`Failed to upload profile picture: ${errorMsg}`);
-      setShowMessage(true);
-      fadeCycle();
+      return;
     }
+  
+    uploadProfilePicture(token, selectedFile)
+      .then((profileUrl) => {
+        setProfilePicture(profileUrl);
+        setSuccessMessage("Profile picture updated successfully!");
+        setShowMessage(true);
+        fadeCycle();
+      })
+      .catch((error) => {
+        const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
+        setError(`Failed to upload profile picture: ${errorMsg}`);
+        setShowMessage(true);
+        fadeCycle();
+      });
   };
+  
 
-  const handleDeleteProfilePicture = async () => {
+  const handleDeleteProfilePicture = () => {
     clearTimeout(fadeTimeout.current);
     setError("");
     setSuccessMessage("");
     setShowMessage(false);
-
-    try {
-      await deleteProfilePicture(token);
-      setProfilePicture(null);
-      setSuccessMessage("Profile picture deleted successfully!");
-      setShowMessage(true);
-      fadeCycle();
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
-      setError(`Failed to delete profile picture: ${errorMsg}`);
-      setShowMessage(true);
-      fadeCycle();
-    }
+  
+    deleteProfilePicture(token)
+      .then(() => {
+        setProfilePicture(null);
+        setSuccessMessage("Profile picture deleted successfully!");
+        setShowMessage(true);
+        fadeCycle();
+      })
+      .catch((error) => {
+        const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
+        setError(`Failed to delete profile picture: ${errorMsg}`);
+        setShowMessage(true);
+        fadeCycle();
+      });
   };
+  
 
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);

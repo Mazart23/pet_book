@@ -55,6 +55,13 @@ edit_password_model = api.model(
     }
 )
 
+user_profile_picture_model = api.model(
+    'Login input model',
+    {
+        'profile_picture_url': fields.String(),
+    }
+)
+
 
 @api.route('/')
 class User(Resource):
@@ -167,13 +174,12 @@ class UserPicture(Resource):
         description="Fetch the profile picture URL of a user by their ID.",
         params={
             "user_id": {"description": "The ID of the user whose profile picture URL is to be fetched.", "example": "671f880f5bf26ed4c9f540fd", "required": True}
-        },
-        responses={
-            200: "OK",
-            404: "User not found",
-            400: "User ID not provided"
         }
     )
+    @api.response(200, "OK")
+    @api.response(404, "User not found")
+    @api.response(400, "User ID not provided")
+    @api.marshal_with(user_profile_picture_model, code=200)
     def get(self):
         '''
         Fetch the profile picture URL of a user by their ID.
@@ -196,15 +202,13 @@ class UserPicture(Resource):
         consumes=["multipart/form-data"],
         params={
             "picture": {"description": "The new profile picture file.", "type": "file", "required": True}
-        },
-        responses={
-            200: "OK",
-            400: "No picture file provided",
-            404: "User not found",
-            401: "Unauthorized",
-            500: "Failed to upload image or update profile picture"
         }
     )
+    @api.response(200, "OK")
+    @api.response(400, "No picture file provided")
+    @api.response(404, "User not found")
+    @api.response(401, "Unauthorized")
+    @api.response(500, "Failed to upload image or update profile picture")
     def put(self):
         '''
         Set or update the authenticated user's profile picture.
@@ -213,20 +217,16 @@ class UserPicture(Resource):
         queries = db()
 
         try:
-            log.info(f"Received request to update profile picture for user {user_id}")
 
             user = queries.get_user_by_id(user_id)
             if not user:
-                log.warning(f"User with ID {user_id} not found.")
                 api.abort(404, "User not found")
 
             if 'picture' not in request.files:
-                log.warning(f"No picture file provided in request for user {user_id}")
                 api.abort(400, "No picture file provided")
             
             picture = request.files['picture']
 
-            log.info("Uploading picture to Imgur...")
             headers = {"Authorization": f"Client-ID {os.environ.get('IMGUR_CLIENT_ID')}"}
             response = requests.post(
                 os.environ.get('IMGUR_API_URL'),
@@ -235,35 +235,28 @@ class UserPicture(Resource):
             )
 
             if response.status_code != 200:
-                log.error(f"Imgur upload failed with status code {response.status_code}: {response.text}")
                 api.abort(500, "Failed to upload image to Imgur")
 
             imgur_data = response.json()
             new_picture_url = imgur_data['data']['link']
-            log.info(f"Imgur upload successful. New URL: {new_picture_url}")
 
             result = queries.update_user_picture(user_id, new_picture_url)
             if not result:
-                log.error(f"Failed to update profile picture for user {user_id} in database.")
                 api.abort(500, "Failed to update user profile picture")
             
-            log.info(f"Profile picture updated successfully for user {user_id}")
             return {"profile_picture_url": new_picture_url}, 200
 
         except Exception as e:
-            log.error(f"Unexpected error updating profile picture for user {user_id}: {e}")
             api.abort(500, "An unexpected error occurred.")
 
     @jwt_required()
     @api.doc(
-        description="Delete the authenticated user's profile picture.",
-        responses={
-            200: "OK",
-            404: "User not found",
-            401: "Unauthorized",
-            500: "Failed to delete user profile picture"
-        }
+        description="Delete the authenticated user's profile picture."
     )
+    @api.response(200, "OK")
+    @api.response(404, "User not found")
+    @api.response(401, "Unauthorized")
+    @api.response(500, "Failed to delete user profile picture")
     def delete(self):
         """
         Delete the authenticated user's profile picture.
