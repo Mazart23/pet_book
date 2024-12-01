@@ -3,7 +3,7 @@ import requests
 from .apps import Service
 
 
-def send_request(method: str, to: Service | str, endpoint: str, json_data={}, files={}, json_input=True, json_output=True, headers={}, timeout=30) -> requests.Response:
+def send_request(method: str, to: Service | str, endpoint = '/', json_data={}, files={}, json_input=True, json_output=True, headers={}, timeout=30) -> requests.Response:
     if isinstance(to, Service):
         url = f'{to.http}://{to.ip}:{to.port}{endpoint}'
     else:
