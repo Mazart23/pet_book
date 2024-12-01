@@ -21,7 +21,7 @@ def send_request(method: str, to: Service | str, endpoint: str, json_data={}, fi
     
         match method:
             case 'GET':
-                if headers.keys().get('Content-Type') == 'application/json':
+                if headers.get('Content-Type') == 'application/json':
                     headers.pop('Content-Type')
                 response = requests.get(url, params=json_data, timeout=timeout, headers=headers)
             case 'POST':
