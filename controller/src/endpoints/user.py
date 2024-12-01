@@ -8,8 +8,9 @@ from flask_restx import Resource, fields, Namespace
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import bcrypt
 
-from ..database.queries import Queries as db 
-
+from ..database.queries import Queries as db
+from ..utils.apps import Url
+from ..utils.request import send_request
 
 
 log = logging.getLogger('USER')
@@ -227,14 +228,16 @@ class UserPicture(Resource):
             
             picture = request.files['picture']
 
-            headers = {"Authorization": f"Client-ID {os.environ.get('IMGUR_CLIENT_ID')}"}
-            response = requests.post(
-                os.environ.get('IMGUR_API_URL'),
-                headers=headers,
-                files={"image": picture}
-            )
-
+            try:
+                headers = {"Authorization": f"Client-ID {os.environ.get('IMGUR_CLIENT_ID')}"}
+                response = send_request('POST', Url.IMGUR, 'imgur', files={'image': picture}, headers=headers)
+            
+            except Exception as e:
+                log.error(f'Exception during sending file to imgur service: {e}')
+                api.abort(500, 'Failed to upload image to Imgur')
+            
             if response.status_code != 200:
+                log.error(f'Got unexpected response from imgur service: {response}')
                 api.abort(500, "Failed to upload image to Imgur")
 
             imgur_data = response.json()
