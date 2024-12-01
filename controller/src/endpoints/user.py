@@ -1,17 +1,21 @@
 import logging
+import os
 
-from flask import request
+import requests
+
+from flask import request, jsonify
 from flask_restx import Resource, fields, Namespace
-from flask_jwt_extended import create_access_token, jwt_required
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import bcrypt
 
-from ..database.queries import Queries as db 
+from ..database.queries import Queries as db
+from ..utils.apps import Url
+from ..utils.request import send_request
 
 
 log = logging.getLogger('USER')
 
 api = Namespace('user')
- 
 
 status_model = api.model(
     'Status model',
@@ -49,6 +53,13 @@ edit_password_model = api.model(
         'username': fields.String(),
         'current_password': fields.String(),
         'new_password': fields.String(),
+    }
+)
+
+user_profile_picture_model = api.model(
+    'Login input model',
+    {
+        'profile_picture_url': fields.String(),
     }
 )
 
@@ -156,4 +167,112 @@ class Password(Resource):
         if not result:
             api.abort(500, 'Internal Server Error')
         
+        return {}, 200
+    
+@api.route('/user-picture')
+class UserPicture(Resource):
+    @api.doc(
+        description="Fetch the profile picture URL of a user by their ID.",
+        params={
+            "user_id": {"description": "The ID of the user whose profile picture URL is to be fetched.", "example": "671f880f5bf26ed4c9f540fd", "required": True}
+        }
+    )
+    @api.response(200, "OK")
+    @api.response(404, "User not found")
+    @api.response(400, "User ID not provided")
+    @api.marshal_with(user_profile_picture_model, code=200)
+    def get(self):
+        '''
+        Fetch the profile picture URL of a user by their ID.
+        '''
+        user_id = request.args.get('user_id')
+        
+        if not user_id:
+            api.abort(400, "User ID not provided")
+        
+        queries = db()
+        user = queries.get_user_by_id(user_id)
+        if not user:
+            api.abort(404, "User not found")
+
+        return {"profile_picture_url": user.get("profile_picture_url", None)}, 200
+
+    @jwt_required()
+    @api.doc(
+        description="Set or update the authenticated user's profile picture. Requires a file upload (key: 'picture').",
+        consumes=["multipart/form-data"],
+        params={
+            "picture": {"description": "The new profile picture file.", "type": "file", "required": True}
+        }
+    )
+    @api.response(200, "OK")
+    @api.response(400, "No picture file provided")
+    @api.response(404, "User not found")
+    @api.response(401, "Unauthorized")
+    @api.response(500, "Failed to upload image or update profile picture")
+    def put(self):
+        '''
+        Set or update the authenticated user's profile picture.
+        '''
+        user_id = get_jwt_identity()
+        queries = db()
+
+        try:
+
+            user = queries.get_user_by_id(user_id)
+            if not user:
+                api.abort(404, "User not found")
+
+            if 'picture' not in request.files:
+                api.abort(400, "No picture file provided")
+            
+            picture = request.files['picture']
+
+            try:
+                headers = {"Authorization": f"Client-ID {os.environ.get('IMGUR_CLIENT_ID')}"}
+                response = send_request('POST', Url.IMGUR, files={'image': picture}, headers=headers)
+            
+            except Exception as e:
+                log.error(f'Exception during sending file to imgur service: {e}')
+                api.abort(500, 'Failed to upload image to Imgur')
+            
+            if response.status_code != 200:
+                log.error(f'Got unexpected response from imgur service: {response}')
+                api.abort(500, "Failed to upload image to Imgur")
+
+            imgur_data = response.json()
+            new_picture_url = imgur_data['data']['link']
+
+            result = queries.update_user_picture(user_id, new_picture_url)
+            if not result:
+                api.abort(500, "Failed to update user profile picture")
+            
+            return {"profile_picture_url": new_picture_url}, 200
+
+        except Exception as e:
+            api.abort(500, "An unexpected error occurred.")
+
+    @jwt_required()
+    @api.doc(
+        description="Delete the authenticated user's profile picture."
+    )
+    @api.response(200, "OK")
+    @api.response(404, "User not found")
+    @api.response(401, "Unauthorized")
+    @api.response(500, "Failed to delete user profile picture")
+    def delete(self):
+        """
+        Delete the authenticated user's profile picture.
+        """
+        user_id = get_jwt_identity()
+        queries = db()
+        user = queries.get_user_by_id(user_id)
+
+        if not user:
+            api.abort(404, "User not found")
+
+        result = queries.update_user_picture(user_id, None)
+        if not result:
+            api.abort(500, "Failed to delete user profile picture")
+
         return {}, 200

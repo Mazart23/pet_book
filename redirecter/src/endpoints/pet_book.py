@@ -117,13 +117,13 @@ class Notify(Resource):
         
         try:
             response_controller = send_request('POST', Services.CONTROLLER, '/qr/scan', json_data=json_data)
-
-            if response_controller.status_code != 200:
-                log.error(f'Got unexpected response from controller for sending qr scan info: {response_controller}')
-                api.abort(500, 'Internal Server Error')
                 
         except Exception as e:
             log.error(f'Exception during sending qr scan info: {e}')
             api.abort(500, 'Request Error')
+        
+        if response_controller.status_code != 200:
+            log.error(f'Got unexpected response from controller for sending qr scan info: {response_controller}')
+            api.abort(500, 'Internal Server Error')
         
         return {}, 200

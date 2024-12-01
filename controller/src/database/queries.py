@@ -65,3 +65,22 @@ class Queries(MongoDBConnect):
             return False
         
         return True
+
+    def update_user_picture(self, user_id: str, new_picture_url: str) -> bool:
+
+        try:
+            update_result = self.update_one(
+                'users',
+                {'_id': ObjectId(user_id)},
+                {'$set': {'profile_picture_url': new_picture_url}}
+            )
+
+            if update_result.modified_count == 0:
+                log.info(f"Profile picture not updated for user {user_id}")
+                return False
+
+            return True
+        
+        except Exception as e:
+            log.error(f"Error updating profile picture for user {user_id}: {e}")
+            return False
