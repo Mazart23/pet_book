@@ -95,6 +95,7 @@ class Notification(Resource):
     @api.expect(delete_model, validate=True)
     @api.response(200, 'OK')
     @api.response(400, 'Bad Request')
+    @api.response(401, 'Unauthorized')
     @api.response(500, 'Database Error')
     @jwt_required()
     def delete(self):
