@@ -33,8 +33,10 @@ scan_input_model = api.model(
 reaction_model = api.model(
     'Reaction model', 
     {
+        'reaction_id': fields.String(required=True, description='Unique ID of the reaction'),
         'post_id': fields.String(required=True, description='Unique ID of the reacted post'),
         'user_id': fields.String(required=True, description='Unique ID of the user who reacted'),
+        'username': fields.String(required=True, description='Name of the user who reacted'),
         'reaction_type': fields.String(required=True, description='Type of reaction'),
     }
 )
@@ -42,8 +44,8 @@ reaction_model = api.model(
 reaction_input_model = api.model(
     'Reaction input model', 
     {
-        'user_id': fields.String(required=True, description='Unique ID of the user'),
-        'reaction': fields.Nested(reaction_model, required=True, description='Reaction information'),
+        'user_owner_id': fields.String(required=True, description='Unique ID of the user'),
+        'data': fields.Nested(reaction_model, required=True, description='Reaction information'),
         'timestamp': fields.String(required=True, description='Time of reaction')
     }
 )
@@ -52,7 +54,6 @@ comment_model = api.model(
     'Comment model', 
     {
         'comment_id': fields.String(required=True, description='Unique ID of the comment'),
-        'content': fields.String(required=True, description='Content of the comment'),
         'post_id': fields.String(required=True, description='Unique ID of the commented post'),
         'user_id': fields.String(required=True, description='Unique ID of the user who commented'),
         'username': fields.String(required=True, description='Username of the user who commented'),
@@ -62,8 +63,8 @@ comment_model = api.model(
 comment_input_model = api.model(
     'Comment input model', 
     {
-        'user_id': fields.String(required=True, description='Unique ID of the user'),
-        'comment': fields.Nested(comment_model, required=True, description='Comment information'),
+        'user_owner_id': fields.String(required=True, description='Unique ID of the user'),
+        'data': fields.Nested(comment_model, required=True, description='Comment information'),
         'timestamp': fields.String(required=True, description='Time of comment')
     }
 )
@@ -95,7 +96,7 @@ class Reaction(Resource):
     def post(self):
         json_data = request.get_json()
 
-        user_id = json_data.pop('user_id')
+        user_id = json_data.pop('user_owner_id')
         
         socket = Websocket()
 
@@ -113,7 +114,7 @@ class Comment(Resource):
     def post(self):
         json_data = request.get_json()
 
-        user_id = json_data.pop('user_id')
+        user_id = json_data.pop('user_owner_id')
         
         socket = Websocket()
 

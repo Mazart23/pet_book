@@ -68,15 +68,7 @@ class MongoDBConnect:
         collection = self.get_collection(collection_name)
         return collection.find_one(filter)
 
-    def find_aggregate(self, collection_name: str, filter: dict = {}, projection=None, limit: int = 10) -> list[dict]:
-        collection = self.get_collection(collection_name)
-        pipeline = [{"$match": filter}]
-        
-        if projection:
-            pipeline.append({"$project": projection})
-        
-        if limit:
-            pipeline.append({"$limit": limit})
-        
+    def find_aggregate(self, collection_name: str, pipeline: list[dict]) -> list[dict]:
+        collection = self.get_collection(collection_name)        
         return list(collection.aggregate(pipeline))
     

@@ -20,7 +20,6 @@ comment_model = api.model(
         'post_id': fields.String(required=True, description='Unique ID of the post'),
         'user_id': fields.String(required=True, description='Unique ID of the user that has commented the post'),
         'comment_id': fields.String(required=True, description='Unique ID of the comment'),
-        'content': fields.String(required=True, description='Content of the comment'),
     }
 )
 
@@ -65,6 +64,7 @@ delete_model = api.model(
     'Delete notification model',
     {
         'notification_id': fields.String(required=True, description='Unique ID of the notification'),
+        'notification_type': fields.String(required=True, description='Type of notification', enum=['comment', 'reaction', 'scan'])
     }
 )
 
@@ -104,9 +104,10 @@ class Notification(Resource):
         '''
         user_id = get_jwt_identity()
         notification_id = request.json.get('notification_id')
+        notification_type = request.json.get('notification_type')
         
         queries = db()
-        result = queries.delete_notification(user_id, notification_id)
+        result = queries.delete_notification(notification_type, user_id, notification_id)
         
         if not result:
             log.error(f'Cannot delete reaction: {user_id = }, {notification_id = }')
