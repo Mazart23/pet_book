@@ -66,3 +66,42 @@ export async function deleteProfilePicture(token) {
       throw error;
     });
 }
+export async function fetchPosts({ userId = null, page = 1, limit = 10 } = {}) {
+  await servicesWait();
+
+  const params = {
+    page,
+    limit,
+    ...(userId && { user_id: userId }), 
+  };
+
+  return axios
+    .get(`${services.controller.url}/post/posts`, { params })
+    .then((response) => response.data.posts)
+    .catch((error) => {
+      throw error;
+    });
+}
+
+
+export async function addPost(token, description, images, location = "") {
+  const formData = new FormData();
+  formData.append("description", description);
+  if (location) formData.append("location", location);
+
+  images.forEach((image, index) => {
+    formData.append("images", image); 
+  });
+
+  return axios
+    .post(`${services.controller.url}/post/posts`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then((response) => response.data.post)
+    .catch((error) => {
+      throw error;
+    });
+}
