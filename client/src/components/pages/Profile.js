@@ -1,9 +1,11 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import useToken from "../contexts/TokenContext";
 import {
   fetchProfilePicture,
   uploadProfilePicture,
   deleteProfilePicture,
+  fetchPosts,
+  deletePost,
 } from "/client/src/Api";
 import jwtDecode from "jwt-decode";
 
@@ -14,6 +16,7 @@ const Profile = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [showMessage, setShowMessage] = useState(false);
   const [animationClass, setAnimationClass] = useState("animate__fadeInUp");
+  const [userPosts, setUserPosts] = useState([]); // New state for user posts
 
   const fadeTimeout = useRef(null);
   const { token } = useToken();
@@ -29,31 +32,35 @@ const Profile = () => {
     }, 3000);
   };
 
+  // Decode user ID from token
+  const getUserIdFromToken = () => {
+    if (!token) {
+      setError("User is not authenticated. Please log in.");
+      setShowMessage(true);
+      fadeCycle();
+      return null;
+    }
+
+    try {
+      const decodedToken = jwtDecode(token);
+      return decodedToken.sub;
+    } catch (err) {
+      setError(`Failed to decode token: ${err.message}`);
+      setShowMessage(true);
+      fadeCycle();
+      return null;
+    }
+  };
+
   const handleFetchProfilePicture = () => {
     clearTimeout(fadeTimeout.current);
     setError("");
     setSuccessMessage("");
     setShowMessage(false);
-  
-    if (!token) {
-      setError("User is not authenticated. Please log in.");
-      setShowMessage(true);
-      fadeCycle();
-      return;
-    }
-  
-    let userId;
-    try {
-      const decodedToken = jwtDecode(token);
-      userId = decodedToken.sub;
-      if (!userId) throw new Error("Invalid token: User ID is missing.");
-    } catch (err) {
-      setError(`Failed to decode token: ${err.message}`);
-      setShowMessage(true);
-      fadeCycle();
-      return;
-    }
-  
+
+    const userId = getUserIdFromToken();
+    if (!userId) return;
+
     fetchProfilePicture(userId)
       .then((profileUrl) => {
         setProfilePicture(profileUrl);
@@ -68,8 +75,35 @@ const Profile = () => {
         fadeCycle();
       });
   };
-  
-  
+
+  const handleFetchUserPosts = () => {
+    clearTimeout(fadeTimeout.current);
+    setError("");
+    setSuccessMessage("");
+    setShowMessage(false);
+
+    const userId = getUserIdFromToken();
+    if (!userId) return;
+
+    fetchPosts({ userId })
+      .then((posts) => {
+        setUserPosts(posts);
+        setSuccessMessage("Posts fetched successfully!");
+        setShowMessage(true);
+        fadeCycle();
+      })
+      .catch((error) => {
+        const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
+        setError(`Failed to fetch posts: ${errorMsg}`);
+        setShowMessage(true);
+        fadeCycle();
+      });
+  };
+
+  useEffect(() => {
+    // Fetch user posts when component loads
+    handleFetchUserPosts();
+  }, []);
 
   const handleUploadProfilePicture = () => {
     if (!selectedFile) {
@@ -78,19 +112,19 @@ const Profile = () => {
       fadeCycle();
       return;
     }
-  
+
     clearTimeout(fadeTimeout.current);
     setError("");
     setSuccessMessage("");
     setShowMessage(false);
-  
+
     if (!token) {
       setError("User is not authenticated. Please log in.");
       setShowMessage(true);
       fadeCycle();
       return;
     }
-  
+
     uploadProfilePicture(token, selectedFile)
       .then((profileUrl) => {
         setProfilePicture(profileUrl);
@@ -105,14 +139,13 @@ const Profile = () => {
         fadeCycle();
       });
   };
-  
 
   const handleDeleteProfilePicture = () => {
     clearTimeout(fadeTimeout.current);
     setError("");
     setSuccessMessage("");
     setShowMessage(false);
-  
+
     deleteProfilePicture(token)
       .then(() => {
         setProfilePicture(null);
@@ -127,11 +160,42 @@ const Profile = () => {
         fadeCycle();
       });
   };
-  
 
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
   };
+
+  const handleDeletePost = (postId) => {
+    clearTimeout(fadeTimeout.current);
+    setError("");
+    setSuccessMessage("");
+    setShowMessage(false);
+  
+    if (!token) {
+      setError("User is not authenticated. Please log in.");
+      setShowMessage(true);
+      fadeCycle();
+      return;
+    }
+  
+    deletePost(token, postId)
+      .then((message) => {
+        setUserPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
+        setSuccessMessage(message || "Post deleted successfully!");
+        setShowMessage(true);
+        fadeCycle();
+      })
+      .catch((error) => {
+        const errorMsg = error.response?.data?.message || error.message || "An error occurred.";
+        setError(`Failed to delete post: ${errorMsg}`);
+        setShowMessage(true);
+        fadeCycle();
+      });
+  };
+
+  useEffect(() => {
+    handleFetchUserPosts();
+  }, []);
 
   return (
     <div>
@@ -162,6 +226,40 @@ const Profile = () => {
 
       {profilePicture && (
         <button onClick={handleDeleteProfilePicture}>Delete Profile Picture</button>
+      )}
+
+<h2>Your Posts</h2>
+      <button onClick={handleFetchUserPosts}>Refresh Posts</button>
+      
+      {console.log("Rendering userPosts:", userPosts)}
+      
+      {userPosts.length > 0 ? (
+        <ul>
+          
+          {userPosts.map((post) => (
+            <li key={post._id}>
+              
+              <p><strong>{post.description}</strong></p>
+              {post.images_urls && post.images_urls.map((url, index) => (
+                <img
+                  key={index}
+                  src={url}
+                  alt={`Post ${post._id} - ${index}`}
+                  style={{ width: "100px", height: "100px", marginRight: "10px" }}
+                />
+              ))}
+              <p>Location: {post.location || "N/A"}</p>
+              <p>Posted on: {new Date(post.timestamp).toLocaleString()}</p>
+              <button   onClick={() => {
+                console.log("Deleting post with ID:", post._id);
+                handleDeletePost(post._id);
+              }}
+          >Delete</button> 
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No posts to display.</p>
       )}
 
       {showMessage && (
