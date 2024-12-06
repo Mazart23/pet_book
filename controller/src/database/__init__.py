@@ -63,3 +63,8 @@ class MongoDBConnect:
     def find_one(self, collection_name: str, filter: dict) -> dict:
         collection = self.get_collection(collection_name)
         return collection.find_one(filter)
+    def delete_one(self, collection_name: str, query: dict):
+        collection = self.db[collection_name]
+        result = collection.delete_one(query)  # Perform the deletion
+        return result
+

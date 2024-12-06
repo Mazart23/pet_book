@@ -6,6 +6,7 @@ from flask_restx import Resource, fields, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from ..database.queries import Queries as db
+from bson.objectid import ObjectId
 from ..utils.request import send_request
 from ..utils.apps import Services
 from ..utils.apps import Url
@@ -18,6 +19,7 @@ log = logging.getLogger('POST')
 api = Namespace('post')
 
 post_model = api.model('Post', {
+    '_id': fields.String(description="User ID of the post creator", example="671f880f5bf26ed4c9f540fd"),
     '_user_id': fields.String(description="User ID of the post creator", example="671f880f5bf26ed4c9f540fd"),
     'description': fields.String(description="Post description", example="My first post!"),
     'images_urls': fields.List(fields.String, description="List of image URLs", example=["url1", "url2"]),
@@ -59,7 +61,7 @@ class Post(Resource):
             # Build query filter
             query = {}
             if user_id:
-                query['_user_id'] = db.get_user_by_id(user_id)
+                query = {'_user_id': ObjectId(user_id)}
 
             # Pagination
             skip = (page - 1) * limit
@@ -218,9 +220,11 @@ class Post(Resource):
         """
         try:
             log.info("DELETE /posts endpoint hit.")
-            data = request.json
+            log.info(f"Request Headers: {request.headers}")
+            log.info(f"Raw Data: {request.data.decode('utf-8')}")
+            data = request.get_json()
             log.info(f"Received data: {data}")
-            post_id = data['post_id']
+            post_id = data['_id']
             user_id = get_jwt_identity()
             log.info(f"User ID: {user_id}, Post ID: {post_id}")
 

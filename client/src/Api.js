@@ -105,3 +105,29 @@ export async function addPost(token, description, images, location = "") {
       throw error;
     });
 }
+
+export const deletePost = async (token, postId) => {
+  if (!postId) {
+    console.error("No postId provided to deletePost");
+    throw new Error("Post ID is required");
+  }
+  try {
+    const response = await fetch(`${services.controller.url}/post/posts`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ _id: postId }), 
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete post.");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error in deletePost:", error);
+    throw error;
+  }
+};
+
