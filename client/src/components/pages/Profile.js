@@ -87,6 +87,7 @@ const Profile = () => {
 
     fetchPosts({ userId })
       .then((posts) => {
+        setUserPosts(posts);
         setSuccessMessage("Posts fetched successfully!");
         setShowMessage(true);
         fadeCycle();
