@@ -22,3 +22,7 @@ services:
     ip_host: "localhost"
     ip: "notifier"
     port: 5003
+
+external:
+  imgur:
+    url: "https://api.imgur.com/3/image"
