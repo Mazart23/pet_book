@@ -1,22 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { io } from "socket.io-client";
-import useToken from './TokenContext';
+import useToken from "./TokenContext";
+import useConfig from "./ConfigContext";
 
 const WebsocketContext = createContext(null);
 
 const useWebsocket = () => useContext(WebsocketContext);
 
 export const WebsocketProvider = ({ children }) => {
+  const { config } = useConfig();
   const { token } = useToken();
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    if (token) {
-      const websocket = io("http://localhost:5003/", {
+    if (token && config) {
+      const websocket = io(config.notifier.url, {
         query: { token: token },
         transports: ["websocket"],
         cors: {
-          origin: "http://localhost:3000/",
+          origin: config.client.url,
         },
         timeout: 5000,
       });
@@ -28,7 +30,15 @@ export const WebsocketProvider = ({ children }) => {
       });
 
       websocket.on("notification_scan", (data) => {
-        console.log(data);
+        console.log("Scan", data);
+      });
+
+      websocket.on("notification_reaction", (data) => {
+        console.log("Reaction", data);
+      });
+
+      websocket.on("notification_comment", (data) => {
+        console.log("Comment", data);
       });
 
       return () => {
@@ -41,7 +51,7 @@ export const WebsocketProvider = ({ children }) => {
         setSocket(null);
       }
     }
-  }, [token]);
+  }, [token, config]);
 
   return (
     <WebsocketContext.Provider value={socket}>

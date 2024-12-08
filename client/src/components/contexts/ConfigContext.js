@@ -7,7 +7,6 @@ const useConfig = () => useContext(ConfigContext);
 
 export const ConfigProvider = ({ children }) => {
   const [config, setConfig] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getConfig()
@@ -20,25 +19,22 @@ export const ConfigProvider = ({ children }) => {
             ip_host: service.ip_host,
             ip: service.ip,
             port: service.port,
-            url: `${service.http}://${service.ip_host}:${service.port}`,
+            url: `${service.http}://${service.ip_host}:${service.port}`
           };
         });
 
         setConfig(responseConfig);
         setServices(responseConfig);
-        setLoading(false);
       })
       .catch((error) => {
-        console.error(`Failed to get config: ${error.message}`);
-        setLoading(false);
+        console.log(`Failed to get config: ${error.message}`);
       });
-  }, []);
-
-  if (loading) {
-    return <div>Loading configuration...</div>;
-  }
-
-  const contextValue = { config };
+  }, [])
+  
+  const contextValue = {
+    config,
+    setConfig
+  };
 
   return (
     <ConfigContext.Provider value={contextValue}>
