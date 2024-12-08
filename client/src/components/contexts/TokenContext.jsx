@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
+import Cookies from 'js-cookie'
 
 const TokenContext = createContext();
 
@@ -6,16 +7,16 @@ const useToken = () => useContext(TokenContext);
 
 export const TokenProvider = ({ children }) => {
   const [token, setToken] = useState(() => {
-    return sessionStorage.getItem("token") || null;
+    return Cookies.get("token") || null;
   });
 
   const saveToken = (newToken) => {
-    sessionStorage.setItem("token", newToken);
+    Cookies.set("token", newToken);
     setToken(newToken);
   };
 
   const removeToken = () => {
-    sessionStorage.removeItem("token");
+    Cookies.remove("token");
     setToken(null);
   };
 

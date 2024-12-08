@@ -1,8 +1,11 @@
 "use client";
 
+import "animate.css";
+import React from "react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { Providers } from "./providers";
+import { ConfigProvider } from '../components/contexts/ConfigContext';
 import { TokenProvider } from '../components/contexts/TokenContext';
 import { WebsocketProvider } from "../components/contexts/WebsocketContext";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -14,7 +17,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
-}: {
+} : {
   children: React.ReactNode;
 }) {
   return (
@@ -26,16 +29,18 @@ export default function RootLayout({
       <head />
 
       <body className={`bg-[#FCFCFC] dark:bg-black ${inter.className}`}>
-        <TokenProvider>
-          <WebsocketProvider>
-            <Providers>
-              <Header />
-              {children}
-              <Footer />
-              <ScrollToTop />
-            </Providers>
-          </WebsocketProvider>
-        </TokenProvider> 
+        <ConfigProvider>
+          <TokenProvider>
+            <WebsocketProvider>
+              <Providers>
+                <Header />
+                {children}
+                <Footer />
+                <ScrollToTop />
+              </Providers>
+            </WebsocketProvider>
+          </TokenProvider>
+        </ConfigProvider>
       </body>
     </html>
   );
