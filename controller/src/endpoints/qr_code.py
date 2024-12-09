@@ -1,6 +1,9 @@
 import logging
 import datetime
+import qr_code as qrcode
+import base64
 
+from io import BytesIO
 from flask import request
 from flask_restx import Resource, fields, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -81,8 +84,24 @@ class Generator(Resource):
     @api.response(500, 'Internal Server Error')
     @jwt_required()
     def get(self):
+        # Pobranie informacji o zalogowanym użytkowniku (wymaga JWT)
         user_id = get_jwt_identity()
-        
-        qr_encoded = ''
-            
+
+        # Generowanie kodu QR na podstawie user_id lub innej informacji
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(f"UserID: {user_id}")  # Możesz dostosować dane zapisane w QR
+        qr.make(fit=True)
+
+        # Konwertowanie obrazu QR do formatu base64
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        qr_encoded = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+        # Zwracanie zakodowanego obrazu QR w odpowiedzi
         return {'qr': qr_encoded}, 200
