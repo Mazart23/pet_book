@@ -2,11 +2,7 @@ import logging
 
 from flask import request
 from flask_restx import Resource, fields, Namespace
-<<<<<<< HEAD
-from flask_jwt_extended import jwt_required
-=======
 from flask_jwt_extended import jwt_required, get_jwt_identity
->>>>>>> feature/notifications_rest
 
 from ..database.queries import Queries as db
 from ..utils.request import send_request
@@ -24,7 +20,6 @@ comment_model = api.model(
         'post_id': fields.String(required=True, description='Unique ID of the post'),
         'user_id': fields.String(required=True, description='Unique ID of the user that has commented the post'),
         'comment_id': fields.String(required=True, description='Unique ID of the comment'),
-        'content': fields.String(required=True, description='Content of the comment'),
     }
 )
 
@@ -108,9 +103,10 @@ class Notification(Resource):
         '''
         user_id = get_jwt_identity()
         notification_id = request.json.get('notification_id')
+        notification_type = request.json.get('notification_type')
         
         queries = db()
-        result = queries.delete_notification(user_id, notification_id)
+        result = queries.delete_notification(notification_type, user_id, notification_id)
         
         if not result:
             log.error(f'Cannot delete reaction: {user_id = }, {notification_id = }')
