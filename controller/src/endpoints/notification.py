@@ -4,6 +4,7 @@ from flask import request
 from flask_restx import Resource, fields, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
+
 from ..database.queries import Queries as db
 from ..utils.request import send_request
 from ..utils.apps import Services
@@ -64,7 +65,6 @@ delete_model = api.model(
     'Delete notification model',
     {
         'notification_id': fields.String(required=True, description='Unique ID of the notification'),
-        'notification_type': fields.String(required=True, description='Type of notification', enum=['comment', 'reaction', 'scan'])
     }
 )
 
@@ -114,3 +114,4 @@ class Notification(Resource):
             api.abort(500, 'Database Error')
         
         return {}, 200
+ 

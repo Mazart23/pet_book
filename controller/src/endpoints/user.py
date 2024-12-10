@@ -232,7 +232,7 @@ class UserPicture(Resource):
 
             try:
                 headers = {"Authorization": f"Client-ID {os.environ.get('IMGUR_CLIENT_ID')}"}
-                response = send_request('POST', Url.IMGUR, 'imgur', files={'image': picture}, headers=headers)
+                response = send_request('POST', Url.IMGUR, files={'image': picture}, headers=headers)
             
             except Exception as e:
                 log.error(f'Exception during sending file to imgur service: {e}')

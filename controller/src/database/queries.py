@@ -26,6 +26,14 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f'Error fetching user: {e}')
             return {}
+        
+    def get_user_by_email(self, email: str) -> dict:
+        try:
+            filter = {'email': email}
+            return self.find_one('users', filter)
+        except Exception as e:
+            log.error(f'Error fetching user: {e}')
+            return {}
     
     def get_post_by_id(self, id: str) -> dict:
         try:
