@@ -56,6 +56,10 @@ class MongoDBConnect:
         collection = self.get_collection(collection_name)
         return collection.update_one(filter, new_values, session=session)
 
+    def delete_one(self, collection_name: str, filter: dict, session: pymongo.client_session.ClientSession | None = None) -> pymongo.results.InsertOneResult:
+        collection = self.get_collection(collection_name)
+        return collection.delete_one(filter, session=session)
+    
     def find(self, collection_name: str, filter: dict = {}, projection=None) -> list[dict]:
         collection = self.get_collection(collection_name)
         return list(collection.find(filter, projection))
@@ -63,3 +67,16 @@ class MongoDBConnect:
     def find_one(self, collection_name: str, filter: dict) -> dict:
         collection = self.get_collection(collection_name)
         return collection.find_one(filter)
+
+    def find_aggregate(self, collection_name: str, filter: dict = {}, projection=None, limit: int = 10) -> list[dict]:
+        collection = self.get_collection(collection_name)
+        pipeline = [{"$match": filter}]
+        
+        if projection:
+            pipeline.append({"$project": projection})
+        
+        if limit:
+            pipeline.append({"$limit": limit})
+        
+        return list(collection.aggregate(pipeline))
+    

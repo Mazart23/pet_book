@@ -2,7 +2,11 @@ import logging
 
 from flask import request
 from flask_restx import Resource, fields, Namespace
+<<<<<<< HEAD
 from flask_jwt_extended import jwt_required
+=======
+from flask_jwt_extended import jwt_required, get_jwt_identity
+>>>>>>> feature/notifications_rest
 
 from ..database.queries import Queries as db
 from ..utils.request import send_request
@@ -81,22 +85,35 @@ class Notification(Resource):
         '''
         Fetch list of notifications
         '''
+        user_id = get_jwt_identity()
         quantity = request.args.get('quantity', None, type=int)
         if quantity is None or quantity <= 0:
             log.error(f'Got {quantity = }, quantity is required and must be a positive integer')
-            api.abort(400, 'Quantity is required and must be a positive integer.')
+            api.abort(400, 'Bad Request')
         
-        result = {}
+        queries = db()
+        result = queries.get_notifications(user_id, quantity)
         
         return result, 200
 
     @api.expect(delete_model, validate=True)
     @api.response(200, 'OK')
     @api.response(400, 'Bad Request')
-    @api.response(404, 'User not found')
-    @api.response(400, 'User ID not provided')
+    @api.response(401, 'Unauthorized')
+    @api.response(500, 'Database Error')
     @jwt_required()
     def delete(self):
         '''
         Delete notification
         '''
+        user_id = get_jwt_identity()
+        notification_id = request.json.get('notification_id')
+        
+        queries = db()
+        result = queries.delete_notification(user_id, notification_id)
+        
+        if not result:
+            log.error(f'Cannot delete reaction: {user_id = }, {notification_id = }')
+            api.abort(500, 'Database Error')
+        
+        return {}, 200

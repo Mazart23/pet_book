@@ -2,6 +2,8 @@ from bson.objectid import ObjectId
 from bson.binary import Binary
 import logging
 
+from pymongo import DESCENDING
+
 from . import MongoDBConnect
 
 log = logging.getLogger('QUERIES')
@@ -33,6 +35,52 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f'Error fetching user: {e}')
             return {}
+    
+    def get_notifications(self, user_id: str, quantity: int) -> list[dict]:
+        try:
+            filter = {'user_id': user_id}
+            projection = {
+                "custom_fields": {
+                    "$switch": {
+                        "branches": [
+                            {
+                                "case": {"$eq": ["$notification_type", "comment"]},
+                                "then": {
+                                    "post_id": 1,
+                                    "user_id": 1,
+                                    "comment_id": 1,
+                                    "content": 1,
+                                    'timestamp': 1
+                                }
+                            },
+                            {
+                                "case": {"$eq": ["$notification_type", "reaction"]},
+                                "then": {
+                                    "post_id": 1,
+                                    "user_id": 1,
+                                    "reaction_type": 1,
+                                    "timestamp": 1
+                                }
+                            },
+                            {
+                                "case": {"$eq": ["$notification_type", "scan"]},
+                                "then": {
+                                    "city": 1,
+                                    "latitude": 1,
+                                    "longitude": 1,
+                                    "timestamp": 1
+                                }
+                            }
+                        ],
+                        "default": {}
+                    }
+                },
+                "timestamp": 1
+            },
+            return self.find('notification', 'user_id', filter, projection, quantity)
+        except Exception as e:
+            log.error(f'Error fetching notifications: {e}')
+            return []
     
     def user_change_password(self, _id: ObjectId, hashed_password: bytes) -> bool:
         try:
@@ -75,7 +123,6 @@ class Queries(MongoDBConnect):
         return True
 
     def update_user_picture(self, user_id: str, new_picture_url: str) -> bool:
-
         try:
             update_result = self.update_one(
                 'users',
@@ -91,4 +138,26 @@ class Queries(MongoDBConnect):
         
         except Exception as e:
             log.error(f"Error updating profile picture for user {user_id}: {e}")
+            return False
+
+    def delete_notification(self, user_id: str, notification_id: str) -> bool:
+        try:
+            notification_object_id = ObjectId(notification_id)
+
+            delete_result = self.delete_one(
+                'users',
+                {
+                    "user_id": user_id,
+                    "_id": notification_object_id
+                }
+            )
+            
+            if delete_result.deleted_count == 0:
+                log.info(f"Notification not deleted for {user_id}, {notification_id = }")
+                return False
+
+            return True
+        
+        except Exception as e:
+            log.error(f"Error during deleting notification: {notification_id = }, {user_id = }, Error = {e}")
             return False

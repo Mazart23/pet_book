@@ -116,7 +116,7 @@ class Login(Resource):
     @api.marshal_with(login_output_model, code=200)
     @api.response(200, 'OK')
     @api.response(400, 'Bad Request')
-    @api.response(401, 'Invalid credentials')
+    @api.response(401, 'Unauthorized')
     def post(self):
         data = request.get_json()
         username = data.get('username')
@@ -127,7 +127,7 @@ class Login(Resource):
         user = queries.get_user_by_username(username)
         
         if not user or not bcrypt.checkpw(password.encode('utf-8'), user['hashed_password']):
-            api.abort(401, 'Invalid credentials')
+            api.abort(401, 'Unauthorized')
         
         access_token = create_access_token(identity=str(user['_id']))
         return {'access_token': access_token}, 200
@@ -138,7 +138,7 @@ class Password(Resource):
     @api.expect(edit_password_model, validate=True)
     @api.response(200, 'OK')
     @api.response(400, 'Bad Request')
-    @api.response(401, 'Invalid credentials')
+    @api.response(401, 'Unauthorized')
     @api.response(404, 'User not found')
     @api.response(500, 'Internal Server Error')
     def patch(self):
@@ -156,7 +156,7 @@ class Password(Resource):
             api.abort(404, 'User not found')
             
         if not bcrypt.checkpw(current_password.encode('utf-8'), user['hashed_password']):
-            api.abort(401, 'Invalid credentials')
+            api.abort(401, 'Unauthorized')
         
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
@@ -178,6 +178,8 @@ class UserPicture(Resource):
         }
     )
     @api.response(200, "OK")
+    @api.response(400, 'Bad Request')
+    @api.response(401, 'Unauthorized')
     @api.response(404, "User not found")
     @api.response(400, "User ID not provided")
     @api.marshal_with(user_profile_picture_model, code=200)
@@ -206,9 +208,9 @@ class UserPicture(Resource):
         }
     )
     @api.response(200, "OK")
-    @api.response(400, "No picture file provided")
+    @api.response(400, 'Bad Request')
+    @api.response(401, 'Unauthorized')
     @api.response(404, "User not found")
-    @api.response(401, "Unauthorized")
     @api.response(500, "Failed to upload image or update profile picture")
     def put(self):
         '''
@@ -252,14 +254,15 @@ class UserPicture(Resource):
         except Exception as e:
             api.abort(500, "An unexpected error occurred.")
 
-    @jwt_required()
     @api.doc(
         description="Delete the authenticated user's profile picture."
     )
     @api.response(200, "OK")
-    @api.response(404, "User not found")
+    @api.response(400, 'Bad Request')
     @api.response(401, "Unauthorized")
+    @api.response(404, "User not found")
     @api.response(500, "Failed to delete user profile picture")
+    @jwt_required()
     def delete(self):
         """
         Delete the authenticated user's profile picture.
