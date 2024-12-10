@@ -2,18 +2,22 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { fetchProfilePicture } from "@/app/Api";
+import { FaMapMarkerAlt } from "react-icons/fa";
+import MapModal from "../Map";
 
 const Notification = ({
   type,
+  id,
   timestamp,
   data
 }: {
   type: string;
+  id: string;
   timestamp: string;
   data: object;
 }) => {
-  const [url, setUrl] = useState();
   const [imageUrl, setImageUrl] = useState();
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false)
 
   const fetchImage = async (userId) => {
     fetchProfilePicture(userId)
@@ -25,9 +29,16 @@ const Notification = ({
       });
   };
 
+  const handleOpenMap = () => {
+    setIsMapModalOpen(true);
+  };
+
+  const handleCloseMap = () => {
+    setIsMapModalOpen(false);
+  };
+
   useEffect(() => {
     if (["reaction", "comment"].includes(type)) {
-      setUrl(data.url);
       fetchImage(data.user_id);
     }
   }, []);
@@ -35,31 +46,34 @@ const Notification = ({
   return (
     <div className="flex items-center lg:block xl:flex">
       <div className="mr-5 lg:mb-3 xl:mb-0">
-        <div className="relative h-[60px] w-[70px] overflow-hidden rounded-md sm:h-[75px] sm:w-[85px]">
-          {imageUrl && 
-            <div className={"animate__animated animate__fadeInUp animate__faster"}>
-              <Image src={imageUrl} fill/>
+        <div className="relative h-[60px] w-[60px] rounded-md sm:h-[75px] sm:w-[75px] flex justify-center items-center">
+          { type === "scan" ? (
+            <div className={"w-[70%] h-[70%] animate__animated animate__fadeInLeft"}>
+              <FaMapMarkerAlt 
+                onClick={handleOpenMap}         
+                className="text-green-500 w-full h-full transition-all duration-300 ease-in-out hover:text-green-600 hover:translate-y-[-5px]"
+              />
             </div>
-          }
+          ):(
+            <>
+              {imageUrl && 
+                <div className={"animate__animated animate__fadeInLeft"}>
+                  <Image src={imageUrl} fill/>
+                </div>
+              }
+            </>
+          )}
         </div>
       </div>
       <div className="w-full">
-        <h5>
         {
           {
             "scan": 
-              <h5>
-                Someone scanned your QR code in this 
-                <Link
-                  href={`/profile/${data.username}`}
-                  className="mb-[6px] block text-base font-medium leading-snug text-black hover:text-primary dark:text-white dark:hover:text-primary"
-                >
-                  locatization
-                </Link>
-                .
-              </h5>,
+              <h6>
+                Someone scanned your QR code in the <span onClick={handleOpenMap} className="mb-[6px] text-base font-medium leading-snug text-black hover:text-primary dark:text-white dark:hover:text-primary outline-none border-none cursor-pointer">location</span>.
+              </h6>,
             "comment":
-              <h5>
+              <h6>
                 User
                 <Link
                   href={`/profile/${data.username}`}
@@ -75,9 +89,9 @@ const Notification = ({
                   post
                 </Link>
                 .
-              </h5>,
+              </h6>,
             "reaction":
-              <h5>
+              <h6>
                 User
                 <Link
                   href={`/profile/${data.username}`}
@@ -93,18 +107,20 @@ const Notification = ({
                   post
                 </Link>
                 .
-              </h5>,
+              </h6>
           }[type]
         }
-          <Link
-            href={slug}
-            className="mb-[6px] block text-base font-medium leading-snug text-black hover:text-primary dark:text-white dark:hover:text-primary"
-          >
-            {title}
-          </Link>
-        </h5>
         <p className="text-xs font-medium text-body-color">{timestamp}</p>
       </div>
+      {type === 'scan' &&
+        <MapModal
+          city={data.city}
+          latitude={data.latitude}
+          longitude={data.longitude}
+          open={isMapModalOpen}
+          onClose={handleCloseMap}
+        />
+      }
     </div>
   );
 };

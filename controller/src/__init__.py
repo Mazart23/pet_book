@@ -26,6 +26,7 @@ from .endpoints.config import api as config
 from .endpoints.post import api as post
 from .endpoints.comment import api as comment
 from .endpoints.reaction import api as reaction
+from .endpoints.notification import api as notification
 
 
 api.add_namespace(user)
@@ -34,5 +35,6 @@ api.add_namespace(config)
 api.add_namespace(post)
 api.add_namespace(comment)
 api.add_namespace(reaction)
+api.add_namespace(notification)
 
 app.register_blueprint(blueprint)

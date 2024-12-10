@@ -12,17 +12,16 @@ export async function postLogin(username, password) {
       username: username,
       password: password
     })
-    .then(function (response) {
+    .then((response) => {
       return response.data.access_token;
     })
-    .catch(function (error) {
+    .catch((error) => {
       throw error;
     });
 }
 
 export async function fetchProfilePicture(userId) {
   await servicesWait();
-  
   return axios
     .get(`${services.controller.url}/user/user-picture`, {
       params: { user_id: userId }, 
@@ -54,7 +53,6 @@ export async function uploadProfilePicture(token, selectedFile) {
 
 export async function deleteProfilePicture(token) {
   await servicesWait();
-
   return axios
     .delete(`${services.controller.url}/user/user-picture`, {
       headers: {
@@ -63,6 +61,29 @@ export async function deleteProfilePicture(token) {
     })
     .then(() => {})
     .catch((error) => {
+      throw error;
+    });
+}
+
+export async function getNotifications(token) {
+  await servicesWait();
+  return axios
+    .get(`${services.controller.url}/notification/`, {
+      params: {
+        quantity: 10
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then((response) => {
+      console.log(response);
+      if (response.status === 200) {
+        return response.data;
+      } else return null;
+    })
+    .catch((error) => {
+      console.log(error);
       throw error;
     });
 }

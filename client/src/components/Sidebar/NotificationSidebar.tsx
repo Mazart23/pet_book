@@ -1,8 +1,24 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import RelatedPost from "./RelatedPost";
+import Notification from "./Notification";
+import { getNotifications } from "@/app/Api";
+import useToken from "../contexts/TokenContext";
 
 const NotificationSidebar = () => {
-  const notifications = ['1', '3', '5'];
+  const [notifications, setNotifications] = useState([]);
+  const { token } = useToken();
+
+  useEffect(() => {
+    if (token) {
+      getNotifications(token).then((data) => {
+        if (data) {
+          setNotifications(data);
+        }
+      });
+    }
+  }, [token])
 
   return (
     <div className="shadow-three dark:bg-gray-dark mb-10 rounded-sm bg-white dark:shadow-none">
@@ -12,11 +28,11 @@ const NotificationSidebar = () => {
       <ul className="p-8">
         {notifications && notifications.map((notification) => (
           <li className="mb-6 border-b border-body-color border-opacity-10 pb-6 dark:border-white dark:border-opacity-10">
-            <RelatedPost
-              title="Best way to boost your online sales."
-              image="/images/blog/post-01.jpg"
-              slug="#"
-              date="12 Feb 2024"
+            <Notification
+              type={notification.notification_type}
+              id={notification.notification_id}
+              timestamp={notification.timestamp}
+              data={notification.data}
             />
           </li>
         ))}

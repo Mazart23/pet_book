@@ -43,17 +43,23 @@ class Queries(MongoDBConnect):
             log.error(f'Error fetching post: {e}')
             return {}
     
-    def get_notifications(self, user_id: str, skip: int, quantity: int) -> list[dict]:
+    def get_notifications(self, user_id: str, last_timestamp: str | None, quantity: int) -> list[dict] | bool:
         try:
-            filter = {'user_id': user_id, 'is_notification': True}
+            filter = {
+                'user_id': ObjectId(user_id),
+                'is_notification': True,
+                'timestamp': {"$lt": last_timestamp}
+            } if last_timestamp else {
+                'user_id': ObjectId(user_id),
+                'is_notification': True
+            }
             pipeline = [
                 {"$match": filter},
                 {"$project": {
-                    "post_id": 1,
-                    "user_id": 1,
-                    "comment_id": 1,
-                    "content": 1,
-                    'timestamp': 1
+                    "city": 1,
+                    "latitude": 1,
+                    "longitude": 1,
+                    "timestamp": 1
                 }},
                 {"$unionWith": {
                     "coll": "reactions",
@@ -79,14 +85,34 @@ class Queries(MongoDBConnect):
                         }}
                     ]
                 }},
+                {"$addFields": {
+                    "user_id_object": {"$toObjectId": "$user_id"}
+                }},
+                {"$lookup": {
+                    "from": "users",
+                    "localField": "user_id_object",
+                    "foreignField": "_id",
+                    "as": "user_info"
+                }},
+                {"$unwind": {
+                    "path": "$user_info",
+                    "preserveNullAndEmptyArrays": True 
+                }},
+                {"$addFields": {
+                    "username": "$user_info.username"
+                }},
+                {"$project": {
+                    "user_info": 0,
+                    "user_id_object": 0
+                }},
                 {"$sort": {"timestamp": DESCENDING}},
-                {"$skip": skip},
                 {"$limit": quantity}
             ]
-            return self.find_aggregate('comments', 'user_id', pipeline)
+            return self.find_aggregate('comments', pipeline)
+
         except Exception as e:
             log.error(f'Error fetching notifications: {e}')
-            return []
+            return False
     
     def user_change_password(self, _id: ObjectId, hashed_password: bytes) -> bool:
         try:

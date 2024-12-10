@@ -2,7 +2,6 @@ import logging
 
 from flask import request, render_template, make_response
 from flask_restx import Resource, fields, Namespace
-import requests
 import geocoder
 from geopy.geocoders import Nominatim
 
@@ -107,7 +106,7 @@ class Notify(Resource):
         
         json_data = {
             'user_id': user_id,
-            'guest': {
+            'data': {
                 'ip': remote_addr,
                 'city': city,
                 'latitude': latitude,

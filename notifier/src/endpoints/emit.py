@@ -11,10 +11,9 @@ log = logging.getLogger('EMIT')
 api = Namespace('emit')
 
 
-guest_model = api.model(
-    'Guest model', 
+scan_model = api.model(
+    'Scan model', 
     {
-        'ip': fields.String(required=True, description='IP address of the guest'),
         'city': fields.String(required=True, description='City name associated with the IP address'),
         'latitude': fields.String(required=True, description='Latitude coordinate of the IP address'),
         'longitude': fields.String(required=True, description='Longitude coordinate of the IP address')
@@ -24,16 +23,17 @@ guest_model = api.model(
 scan_input_model = api.model(
     'Scan input model', 
     {
-        'user_id': fields.String(required=True, description='Unique ID of the user'),
-        'guest': fields.Nested(guest_model, required=True, description='Guest information'),
+        'user_owner_id': fields.String(required=True, description='Unique ID of the user'),
+        'notification_id': fields.String(required=True, description='Unique ID of the scan'),
+        'data': fields.Nested(scan_model, required=True, description='Scan information'),
         'timestamp': fields.String(required=True, description='Time of scan')
     }
 )
 
+
 reaction_model = api.model(
     'Reaction model', 
     {
-        'reaction_id': fields.String(required=True, description='Unique ID of the reaction'),
         'post_id': fields.String(required=True, description='Unique ID of the reacted post'),
         'user_id': fields.String(required=True, description='Unique ID of the user who reacted'),
         'username': fields.String(required=True, description='Name of the user who reacted'),
@@ -42,9 +42,10 @@ reaction_model = api.model(
 )
 
 reaction_input_model = api.model(
-    'Reaction input model', 
+    'Reaction Input Model', 
     {
         'user_owner_id': fields.String(required=True, description='Unique ID of the user'),
+        'notification_id': fields.String(required=True, description='Unique ID of the reaction'),
         'data': fields.Nested(reaction_model, required=True, description='Reaction information'),
         'timestamp': fields.String(required=True, description='Time of reaction')
     }
@@ -53,7 +54,6 @@ reaction_input_model = api.model(
 comment_model = api.model(
     'Comment model', 
     {
-        'comment_id': fields.String(required=True, description='Unique ID of the comment'),
         'post_id': fields.String(required=True, description='Unique ID of the commented post'),
         'user_id': fields.String(required=True, description='Unique ID of the user who commented'),
         'username': fields.String(required=True, description='Username of the user who commented'),
@@ -61,9 +61,10 @@ comment_model = api.model(
 )
 
 comment_input_model = api.model(
-    'Comment input model', 
+    'Comment Input Model', 
     {
         'user_owner_id': fields.String(required=True, description='Unique ID of the user'),
+        'notification_id': fields.String(required=True, description='Unique ID of the comment'),
         'data': fields.Nested(comment_model, required=True, description='Comment information'),
         'timestamp': fields.String(required=True, description='Time of comment')
     }

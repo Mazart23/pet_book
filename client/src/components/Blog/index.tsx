@@ -1,7 +1,6 @@
 import SectionTitle from "../Common/SectionTitle";
 import SingleBlog from "./SingleBlog";
 import blogData from "./blogData";
-import NotificationSidebar from "./NotificationSidebar";
 
 const Blog = () => {
   return (
@@ -15,17 +14,12 @@ const Blog = () => {
           paragraph="There are many variations of passages of Lorem Ipsum available but the majority have suffered alteration in some form."
           center
         />
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <aside className="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-md shadow-md">
-            <NotificationSidebar/>
-          </aside>
-          <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-x-6 lg:gap-x-8 xl:grid-cols-3">
-            {blogData.map((blog) => (
-              <div key={blog.id} className="w-full">
-                <SingleBlog blog={blog} />
-              </div>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-x-6 lg:gap-x-8 xl:grid-cols-3">
+          {blogData.map((blog) => (
+            <div key={blog.id} className="w-full">
+              <SingleBlog blog={blog} />
+            </div>
+          ))}
         </div>
       </div>
     </section>
