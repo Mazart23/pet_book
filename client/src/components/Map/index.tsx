@@ -54,13 +54,13 @@ export default function MapModal({
           City: {city}, Coordinates: [{latitude}, {longitude}]
         </Typography>
         <Box sx={{ height: '100%', width: '100%' }}>
-          <MapContainer center={position} zoom={13} style={{ height: '90%', width: '90%' }}>
+          <MapContainer center={position} zoom={13} style={{ height: '90%' }}>
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
             <Marker position={position}>
-              <Popup>Here someone scanned QR code</Popup>
+              <Popup>Here someone scanned your QR code</Popup>
             </Marker>
           </MapContainer>
         </Box>

@@ -142,7 +142,8 @@ class Queries(MongoDBConnect):
                 'city': city, 
                 'latitude': latitude, 
                 'longitude': longitude, 
-                'timestamp': timestamp
+                'timestamp': timestamp,
+                'is_notification': True
             }
             result = self.insert_one('scans', document)
             

@@ -42,7 +42,7 @@ class Scan(Resource):
         json_data = request.get_json()
 
         user_id = json_data.get('user_id')
-        guest = json_data.get('guest')
+        guest = json_data.get('data')
         
         ip = guest.get('ip')
         city = guest.get('city')

@@ -29,10 +29,6 @@ export const WebsocketProvider = ({ children }) => {
         console.log("Connected to WebSocket");
       });
 
-      websocket.on("notification_scan", (data) => {
-        console.log("Scan", data);
-      });
-
       websocket.on("notification_reaction", (data) => {
         console.log("Reaction", data);
       });
@@ -53,8 +49,12 @@ export const WebsocketProvider = ({ children }) => {
     }
   }, [token, config]);
 
+  const contextValue = {
+    socket,
+  };
+
   return (
-    <WebsocketContext.Provider value={socket}>
+    <WebsocketContext.Provider value={contextValue}>
       {children}
     </WebsocketContext.Provider>
   );

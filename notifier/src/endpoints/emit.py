@@ -79,7 +79,7 @@ class Scan(Resource):
     def post(self):
         json_data = request.get_json()
 
-        user_id = json_data.pop('user_id')
+        user_id = json_data.pop('user_owner_id')
         
         socket = Websocket()
 

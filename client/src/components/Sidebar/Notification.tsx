@@ -47,31 +47,32 @@ const Notification = ({
     <div className="flex items-center lg:block xl:flex">
       <div className="mr-5 lg:mb-3 xl:mb-0">
         <div className="relative h-[60px] w-[60px] rounded-md sm:h-[75px] sm:w-[75px] flex justify-center items-center">
-          { type === "scan" ? (
-            <div className={"w-[70%] h-[70%] animate__animated animate__fadeInLeft"}>
+          <div className={"w-[70%] h-[70%] animate__animated animate__fadeInLeft"}>
+            { type === "scan" ? (
               <FaMapMarkerAlt 
                 onClick={handleOpenMap}         
                 className="text-green-500 w-full h-full transition-all duration-300 ease-in-out hover:text-green-600 hover:translate-y-[-5px]"
               />
-            </div>
-          ):(
-            <>
+            ):(
+              <>
               {imageUrl && 
-                <div className={"animate__animated animate__fadeInLeft"}>
-                  <Image src={imageUrl} fill/>
-                </div>
+                <Image src={imageUrl} fill/>
               }
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </div>
       <div className="w-full">
         {
           {
-            "scan": 
-              <h6>
-                Someone scanned your QR code in the <span onClick={handleOpenMap} className="mb-[6px] text-base font-medium leading-snug text-black hover:text-primary dark:text-white dark:hover:text-primary outline-none border-none cursor-pointer">location</span>.
-              </h6>,
+            "scan":
+              <>
+                <h6>
+                  Someone scanned your QR code!
+                </h6>
+                <span onClick={handleOpenMap} className="mb-[6px] text-base font-medium leading-snug text-green-500 hover:text-green-600 outline-none border-none cursor-pointer">see the location</span>
+              </>,
             "comment":
               <h6>
                 User

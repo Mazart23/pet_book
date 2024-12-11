@@ -65,12 +65,13 @@ export async function deleteProfilePicture(token) {
     });
 }
 
-export async function getNotifications(token) {
+export async function getNotifications(token, lastTimestamp=null) {
   await servicesWait();
   return axios
     .get(`${services.controller.url}/notification/`, {
       params: {
-        quantity: 10
+        quantity: 10,
+        last_timestamp: lastTimestamp
       },
       headers: {
         Authorization: `Bearer ${token}`,
