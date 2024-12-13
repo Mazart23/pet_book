@@ -163,3 +163,7 @@ cython_debug/
 
 # url file
 # apps.yaml
+
+# node dirs
+node_modules/
+.next/

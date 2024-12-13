@@ -61,16 +61,6 @@ get_model = api.model(
             'reaction': reaction_model,
             'scan': scan_model
         })
-        # fields.Polymorph(
-        #     {
-        #         'comment': comment_model,
-        #         'reaction': reaction_model,
-        #         'scan': scan_model
-        #     },
-        #     discriminator='notification_type',
-        #     required=True,
-        #     description='Data specific for notification type'
-        # )
     }
 )
 

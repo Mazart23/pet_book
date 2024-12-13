@@ -80,11 +80,13 @@ class Scan(Resource):
         json_data = request.get_json()
 
         user_id = json_data.pop('user_owner_id')
-        
+        json_data['notification_type'] = 'scan'
+
         socket = Websocket()
 
         if socket.is_connected(user_id):
             socket.emit('notification_scan', json_data, room=user_id)
+            print('emit')
 
         return {}, 200
 
@@ -98,6 +100,7 @@ class Reaction(Resource):
         json_data = request.get_json()
 
         user_id = json_data.pop('user_owner_id')
+        json_data['notification_type'] = 'reaction'
         
         socket = Websocket()
 
@@ -116,6 +119,7 @@ class Comment(Resource):
         json_data = request.get_json()
 
         user_id = json_data.pop('user_owner_id')
+        json_data['notification_type'] = 'comment'
         
         socket = Websocket()
 

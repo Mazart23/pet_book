@@ -58,8 +58,9 @@ class Scan(Resource):
         
         send_json = {}
         send_json.update(json_data)
-        send_json.update({'notification_id': notification_id, 'timestamp': timestamp})
+        send_json.update({'notification_id': str(notification_id), 'timestamp': timestamp})
         send_json['data'].pop('ip')
+        send_json['user_owner_id'] = send_json.pop('user_id')
         
         try:
             send_request('POST', Services.NOTIFIER, '/emit/scan', json_data=send_json)
