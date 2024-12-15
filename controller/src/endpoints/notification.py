@@ -68,6 +68,7 @@ delete_model = api.model(
     'Delete notification model',
     {
         'notification_id': fields.String(required=True, description='Unique ID of the notification'),
+        'notification_type': fields.String(required=True, description='The type of notification')
     }
 )
 
@@ -167,7 +168,7 @@ class Notification(Resource):
         notification_type = request.json.get('notification_type')
         
         queries = db()
-        result = queries.delete_notification(notification_type, user_id, notification_id)
+        result = queries.remove_notification(notification_type, user_id, notification_id)
         
         if not result:
             log.error(f'Cannot delete reaction: {user_id = }, {notification_id = }')

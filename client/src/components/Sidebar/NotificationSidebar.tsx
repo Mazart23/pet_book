@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Notification from "./Notification";
-import { getNotifications } from "@/app/Api";
+import { getNotifications, deleteNotification } from "@/app/Api";
 import useToken from "../contexts/TokenContext";
 import useWebsocket from "../contexts/WebsocketContext";
 
@@ -12,26 +12,45 @@ const NotificationSidebar = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAllLoaded, setIsAllLoaded] = useState(false);
   const [animatedNotifications, setAnimatedNotifications] = useState([]);
+  const [dismissedNotifications, setDismissedNotifications] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { token } = useToken();
   const { socket } = useWebsocket();
 
   const fetchNotifications = () => {
-    if (token) {
+    if (token && !isLoading) {
+      setIsLoading(true);
       getNotifications(token, lastTimestamp).then((data) => {
         if (data) {
           setNotifications((prevNotifications) => prevNotifications.concat(data));
-          const newLastTimestamp = data.at(-1).timestamp;
-          if (newLastTimestamp === lastTimestamp) {
+          if (data.length === 0) {
             setIsAllLoaded(true);
           }
-          setLastTimestamp(newLastTimestamp);
+          else {
+            const newLastTimestamp = data.at(-1).timestamp;
+            setLastTimestamp(newLastTimestamp);
+          }
         }
+        setIsLoading(false);
       });
+    }
+  };
+
+  const handleRemoveNotification = async (type, id) => {
+    if (token) {
+      deleteNotification(token, type, id);
+      setDismissedNotifications((prev) => [...prev, id]);
+
+      setTimeout(() => {
+        setNotifications((prev) => prev.filter((notification) => notification.notification_id !== id));
+        setDismissedNotifications((prev) => prev.filter((nid) => nid !== id));
+      }, 500);
     }
   };
 
   useEffect(() => {
     if (token) {
+      setIsLoading(true);
       getNotifications(token).then((data) => {
         if (data) {
           setNotifications(data);
@@ -41,6 +60,7 @@ const NotificationSidebar = () => {
           setLastTimestamp(data.at(-1).timestamp);
         }
         setIsLoaded(true);
+        setIsLoading(false);
       });
     }
   }, [token]);
@@ -67,11 +87,11 @@ const NotificationSidebar = () => {
   }, [socket]);
 
   return (
-    <div className="shadow-three dark:bg-gray-dark mb-10 rounded-sm bg-white dark:shadow-none">
-      <h3 className="border-b border-body-color border-opacity-10 px-8 py-4 text-lg font-semibold text-black dark:border-white dark:border-opacity-10 dark:text-white">
+    <div className="relative h-full">
+      <h3 className="sticky top-0 z-10 bg-white dark:bg-gray-dark border-b border-body-color border-opacity-10 px-8 py-4 text-lg font-semibold text-black dark:border-white dark:border-opacity-10 dark:text-white">
         Notifications
       </h3>
-      <ul className="p-8">
+      <ul className="p-8 overflow-y-auto h-full">
         {notifications &&
           notifications.map((notification) => (
             <li
@@ -80,6 +100,10 @@ const NotificationSidebar = () => {
                 animatedNotifications.includes(notification.notification_id)
                   ? "animate-slide-in"
                   : ""
+              } ${
+                dismissedNotifications.includes(notification.notification_id)
+                  ? "animate__animated animate__backOutDown"
+                  : ""
               }`}
             >
               <Notification
@@ -87,22 +111,35 @@ const NotificationSidebar = () => {
                 id={notification.notification_id}
                 timestamp={notification.timestamp}
                 data={notification.data}
+                onRemove={handleRemoveNotification}
               />
             </li>
           ))}
         {isLoaded && (
           <div className="flex justify-center">
             {isAllLoaded ? (
-              <p className="mb-[6px] text-base font-medium leading-snug text-gray-400 dark:text-gray-600">
+              <p className="mb-6 text-base font-medium leading-snug text-gray-400 dark:text-gray-600">
                 No more notifications to fetch
               </p>
             ) : (
-              <span
-                onClick={fetchNotifications}
-                className="mb-[6px] text-base font-large leading-snug text-green-500 hover:text-green-600 outline-none border-none cursor-pointer"
-              >
-                Load more
-              </span>
+              isLoading ? (
+                <div className="flex items-center h-16 w-16 mb-6">
+                  <video
+                    src="/animations/hamster.webm"
+                    autoPlay
+                    loop
+                    muted
+                    className="h-[90%] object-contain"
+                  />
+                </div>
+              ):(
+                <span
+                  onClick={fetchNotifications}
+                  className="mt-16 mb-10 text-base font-large leading-snug text-green-500 hover:text-green-600 outline-none border-none cursor-pointer"
+                >
+                  Load more
+                </span>
+              )
             )}
           </div>
         )}

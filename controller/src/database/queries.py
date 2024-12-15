@@ -247,19 +247,17 @@ class Queries(MongoDBConnect):
             return False
 
     def remove_notification(self, notification_type: str, user_id: str, notification_id: str) -> bool:
-        try:
-            notification_object_id = ObjectId(notification_id)
-            
+        try:          
             delete_result = self.update_one(
                 f'{notification_type}s',
                 {
-                    "user_id": user_id,
-                    "_id": notification_object_id
+                    "user_id": ObjectId(user_id),
+                    "_id": ObjectId(notification_id)
                 },
                 {'$set': {'is_notification': False}}
             )
             
-            if delete_result.deleted_count == 0:
+            if delete_result.modified_count == 0:
                 log.info(f"Notification not removed for {user_id}, {notification_id = }")
                 return False
 

@@ -88,3 +88,21 @@ export async function getNotifications(token, lastTimestamp=null) {
       throw error;
     });
 }
+
+export async function deleteNotification(token, notification_type, notification_id) {
+  await servicesWait();
+  return axios
+    .delete(`${services.controller.url}/notification/`, {
+      data: {
+        notification_id: notification_id,
+        notification_type: notification_type
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .catch((error) => {
+      console.log(error);
+      throw error;
+    });
+}

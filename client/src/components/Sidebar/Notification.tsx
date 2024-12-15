@@ -2,19 +2,22 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { fetchProfilePicture } from "@/app/Api";
-import { FaMapMarkerAlt } from "react-icons/fa";
+import { FaTrashAlt } from "react-icons/fa";
+import { MdLocationOn, MdLocationOff } from "react-icons/md";
 import MapModal from "../Map";
 
 const Notification = ({
   type,
   id,
   timestamp,
-  data
+  data,
+  onRemove
 }: {
   type: string;
   id: string;
   timestamp: string;
   data: object;
+  onRemove: (type: string, id: string) => void;
 }) => {
   const [imageUrl, setImageUrl] = useState();
   const [isMapModalOpen, setIsMapModalOpen] = useState(false)
@@ -44,15 +47,21 @@ const Notification = ({
   }, []);
 
   return (
-    <div className="flex items-center lg:block xl:flex">
-      <div className="mr-5 lg:mb-3 xl:mb-0">
+    <div className="flex items-center">
+      <div className="mr-5 xl:mb-0">
         <div className="relative h-[60px] w-[60px] rounded-md sm:h-[75px] sm:w-[75px] flex justify-center items-center">
-          <div className={"w-[70%] h-[70%] animate__animated animate__fadeInLeft"}>
+          <div className="w-[70%] h-[70%] animate__animated animate__fadeInLeft">
             { type === "scan" ? (
-              <FaMapMarkerAlt 
-                onClick={handleOpenMap}         
-                className="text-green-500 w-full h-full transition-all duration-300 ease-in-out hover:text-green-600 hover:translate-y-[-5px]"
-              />
+              (data.city && data.latitude && data.longitude) ? (
+                <MdLocationOn
+                  onClick={handleOpenMap}         
+                  className="text-green-500 w-full h-full transition-all duration-300 ease-in-out hover:text-green-600 hover:translate-y-[-5px] cursor-pointer"
+                />
+              ):(
+                <MdLocationOff         
+                  className="text-body-color w-full h-full"
+                />
+              )
             ):(
               <>
               {imageUrl && 
@@ -68,13 +77,20 @@ const Notification = ({
           {
             "scan":
               <>
-                <h6>
+                <h3 className="text-black dark:text-white">
                   Someone scanned your QR code!
-                </h6>
-                <span onClick={handleOpenMap} className="mb-[6px] text-base font-medium leading-snug text-green-500 hover:text-green-600 outline-none border-none cursor-pointer">see the location</span>
+                </h3>
+                {data.city && data.latitude && data.longitude &&
+                  <span 
+                    onClick={handleOpenMap} 
+                    className='mb-[6px] text-base font-small leading-snug text-green-500 hover:text-green-600 cursor-pointer outline-none border-none'
+                  >
+                    Location
+                  </span>
+                }
               </>,
             "comment":
-              <h6>
+              <h3 className="text-black dark:text-white">
                 User
                 <Link
                   href={`/profile/${data.username}`}
@@ -90,9 +106,9 @@ const Notification = ({
                   post
                 </Link>
                 .
-              </h6>,
+              </h3>,
             "reaction":
-              <h6>
+              <h3 className="text-black dark:text-white">
                 User
                 <Link
                   href={`/profile/${data.username}`}
@@ -108,12 +124,18 @@ const Notification = ({
                   post
                 </Link>
                 .
-              </h6>
+              </h3>
           }[type]
         }
         <p className="text-xs font-medium text-body-color">{timestamp}</p>
       </div>
-      {type === 'scan' &&
+      <div className="relative flex items-center ml-auto pr-4">
+        <FaTrashAlt
+          onClick={() => onRemove(type, id)}
+          className="text-gray-500 text-lg w-5 h-5 transition-all duration-200 ease-out-elastic hover:text-red-500 hover:translate-x-[2px] cursor-pointer"
+        />
+      </div>
+      {type === 'scan' && data.city && data.latitude && data.longitude &&
         <MapModal
           city={data.city}
           latitude={data.latitude}
