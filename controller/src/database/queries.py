@@ -1,6 +1,7 @@
 from bson.objectid import ObjectId
 from bson.binary import Binary
 import logging
+from datetime import datetime
 
 from pymongo import DESCENDING
 
@@ -43,7 +44,7 @@ class Queries(MongoDBConnect):
             log.error(f'Error fetching post: {e}')
             return {}
     
-    def get_notifications(self, user_id: str, last_timestamp: str | None, quantity: int) -> list[dict] | bool:
+    def get_notifications(self, user_id: str, last_timestamp: datetime | None, quantity: int) -> list[dict] | bool:
         try:
             filter = {
                 'user_id': ObjectId(user_id),
@@ -59,7 +60,12 @@ class Queries(MongoDBConnect):
                     "city": 1,
                     "latitude": 1,
                     "longitude": 1,
-                    "timestamp": 1
+                    "timestamp": {
+                        "$dateToString": {
+                            "format": "%Y-%m-%d %H:%M:%S",
+                            "date": "$timestamp"
+                        }
+                    }
                 }},
                 {"$unionWith": {
                     "coll": "reactions",
@@ -69,7 +75,12 @@ class Queries(MongoDBConnect):
                             "post_id": 1,
                             "user_id": 1,
                             "reaction_type": 1,
-                            "timestamp": 1
+                            "timestamp": {
+                                "$dateToString": {
+                                    "format": "%Y-%m-%d %H:%M:%S",
+                                    "date": "$timestamp"
+                                }
+                            }
                         }}
                     ]
                 }},
@@ -81,7 +92,12 @@ class Queries(MongoDBConnect):
                             "city": 1,
                             "latitude": 1,
                             "longitude": 1,
-                            "timestamp": 1
+                            "timestamp": {
+                                "$dateToString": {
+                                    "format": "%Y-%m-%d %H:%M:%S",
+                                    "date": "$timestamp"
+                                }
+                            }
                         }}
                     ]
                 }},
@@ -134,7 +150,7 @@ class Queries(MongoDBConnect):
             return False
     
     @MongoDBConnect.transaction
-    def insert_scan(self, user_id: str, ip: str, city: str, latitude: float, longitude: float, timestamp: str, session=None) -> str | bool:
+    def insert_scan(self, user_id: str, ip: str, city: str, latitude: float, longitude: float, timestamp: datetime, session=None) -> str | bool:
         try:
             document = {
                 'user_id': ObjectId(user_id), 
@@ -167,7 +183,7 @@ class Queries(MongoDBConnect):
             return False
     
     @MongoDBConnect.transaction
-    def insert_comment(self, post_id: str, user_id: str, content: str, timestamp: str, session=None) -> str | bool:
+    def insert_comment(self, post_id: str, user_id: str, content: str, timestamp: datetime, session=None) -> str | bool:
         try:
             document = {
                 'post_id': ObjectId(post_id), 
@@ -198,7 +214,7 @@ class Queries(MongoDBConnect):
             return False
     
     @MongoDBConnect.transaction
-    def insert_comment(self, post_id: str, user_id: str, reaction_type: str, timestamp: str, session=None) -> str | bool:
+    def insert_reaction(self, post_id: str, user_id: str, reaction_type: str, timestamp: datetime, session=None) -> str | bool:
         try:
             document = {
                 'post_id': ObjectId(post_id), 

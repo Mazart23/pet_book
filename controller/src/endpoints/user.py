@@ -17,6 +17,17 @@ log = logging.getLogger('USER')
 
 api = Namespace('user')
 
+
+auth_parser = api.parser()
+auth_parser.add_argument(
+    'Authorization', 
+    location='headers', 
+    required=True, 
+    help='Bearer token for authentication',
+    type=str,
+    default='Bearer ',
+)
+
 status_model = api.model(
     'Status model',
     {
@@ -172,7 +183,6 @@ class Password(Resource):
 @api.route('/user-picture')
 class UserPicture(Resource):
     @api.doc(
-        description="Fetch the profile picture URL of a user by their ID.",
         params={
             "user_id": {"description": "The ID of the user whose profile picture URL is to be fetched.", "example": "671f880f5bf26ed4c9f540fd", "required": True}
         }
@@ -199,12 +209,16 @@ class UserPicture(Resource):
 
         return {"profile_picture_url": user.get("profile_picture_url", None)}, 200
 
-    @jwt_required()
     @api.doc(
-        description="Set or update the authenticated user's profile picture. Requires a file upload (key: 'picture').",
         consumes=["multipart/form-data"],
         params={
-            "picture": {"description": "The new profile picture file.", "type": "file", "required": True}
+            "picture": {"description": "The new profile picture file.", "type": "file", "required": True},
+            'Authorization': {
+                'description': 'Bearer token for authentication',
+                'required': True,
+                'in': 'header',
+                'default': 'Bearer '
+            }
         }
     )
     @api.response(200, "OK")
@@ -212,6 +226,7 @@ class UserPicture(Resource):
     @api.response(401, 'Unauthorized')
     @api.response(404, "User not found")
     @api.response(500, "Failed to upload image or update profile picture")
+    @jwt_required()
     def put(self):
         '''
         Set or update the authenticated user's profile picture.
@@ -254,9 +269,14 @@ class UserPicture(Resource):
         except Exception as e:
             api.abort(500, "An unexpected error occurred.")
 
-    @api.doc(
-        description="Delete the authenticated user's profile picture."
-    )
+    @api.doc(params={
+        'Authorization': {
+            'description': 'Bearer token for authentication',
+            'required': True,
+            'in': 'header',
+            'default': 'Bearer '
+        }
+    })
     @api.response(200, "OK")
     @api.response(400, 'Bad Request')
     @api.response(401, "Unauthorized")

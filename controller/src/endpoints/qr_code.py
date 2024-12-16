@@ -1,5 +1,5 @@
 import logging
-import datetime
+from datetime import datetime
 
 from flask import request
 from flask_restx import Resource, fields, Namespace
@@ -38,7 +38,7 @@ class Scan(Resource):
     @api.response(400, 'Bad Request')
     @api.response(500, 'Database Error')
     def post(self):
-        timestamp = str(datetime.datetime.now())
+        timestamp = datetime.now()
         json_data = request.get_json()
 
         user_id = json_data.get('user_id')
@@ -58,7 +58,7 @@ class Scan(Resource):
         
         send_json = {}
         send_json.update(json_data)
-        send_json.update({'notification_id': str(notification_id), 'timestamp': timestamp})
+        send_json.update({'notification_id': str(notification_id), 'timestamp': str(timestamp)})
         send_json['data'].pop('ip')
         send_json['user_owner_id'] = send_json.pop('user_id')
         

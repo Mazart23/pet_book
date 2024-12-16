@@ -64,9 +64,9 @@ class MongoDBConnect:
         collection = self.get_collection(collection_name)
         return list(collection.find(filter, projection))
     
-    def find_one(self, collection_name: str, filter: dict) -> dict:
+    def find_one(self, collection_name: str, filter: dict = {}, projection=None) -> dict:
         collection = self.get_collection(collection_name)
-        return collection.find_one(filter)
+        return collection.find_one(filter, projection)
 
     def find_aggregate(self, collection_name: str, pipeline: list[dict]) -> list[dict]:
         collection = self.get_collection(collection_name)        

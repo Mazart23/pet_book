@@ -1,5 +1,5 @@
 import logging
-import datetime
+from datetime import datetime
 
 from flask import request
 from flask_restx import Resource, fields, Namespace
@@ -15,8 +15,29 @@ log = logging.getLogger('REACTION')
 api = Namespace('reaction')
 
 
-reaction_model = api.model(
-    'Reaction model', 
+auth_parser = api.parser()
+auth_parser.add_argument(
+    'Authorization', 
+    location='headers', 
+    required=True, 
+    help='Bearer token for authentication',
+    type=str,
+    default='Bearer ',
+)
+
+get_reactions_model = api.model(
+    'Get reactions model', 
+    {
+        'reaction_id': fields.String(required=True, description='Unique ID of the reaction'),
+        'post_id': fields.String(required=True, description='Unique ID of the reacted post'),
+        'user_id': fields.String(required=True, description='Unique ID of the user who reacted'),
+        'username': fields.String(required=True, description='Username of the user who reacted'),
+        'reaction_type': fields.String(required=True, description='Type of raction')
+    }
+)
+
+put_reaction_model = api.model(
+    'Put reaction model', 
     {
         'reaction_type': fields.String(required=True, description='Type of the reaction'),
         'post_id': fields.String(required=True, description='Unique ID of the reacted post'),
@@ -34,12 +55,37 @@ delete_reaction_model = api.model(
 
 @api.route('/')
 class Reaction(Resource):
+    @api.doc(
+        params={
+            'post_id': {'description': 'Unique ID of post to fetch reactions of', 'type': str, 'required': True},
+            'Authorization': {
+                'description': 'Bearer token for authentication',
+                'required': True,
+                'in': 'header',
+                'default': 'Bearer '
+            }
+        }
+    )
+    @api.marshal_list_with(get_reactions_model, code=200)
+    @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
+    @api.response(401, 'Unauthorized')
+    @api.response(500, 'Database Error')
+    @jwt_required()
     def get(self):
         '''
-        fetch
+        Fetch reactions
         '''
 
-    @api.expect(reaction_model, validate=True)
+    @api.doc(params={
+        'Authorization': {
+            'description': 'Bearer token for authentication',
+            'required': True,
+            'in': 'header',
+            'default': 'Bearer '
+        }
+    })
+    @api.expect(put_reaction_model, validate=True)
     @api.response(201, 'Created')
     @api.response(400, 'Bad Request')
     @api.response(401, 'Unauthorized')
@@ -52,7 +98,7 @@ class Reaction(Resource):
         user_id = get_jwt_identity()
         post_id = request.json.get('post_id')
         reaction_type = request.json.get('reaction_type')
-        timestamp = str(datetime.datetime.now())
+        timestamp = datetime.now()
         
         queries = db()
         user_owner_id = queries.get_post_by_id(post_id).get('user_id')
@@ -67,10 +113,10 @@ class Reaction(Resource):
             log.info('User that reacted not found')
             api.abort(404, "User not found")
         
-        reaction_id = queries.insert_reaction(post_id, user_id, reaction_type, timestamp, user_owner_id)
+        reaction_id = queries.insert_reaction(post_id, user_id, reaction_type, timestamp)
         
         if not reaction_id:
-            log.error(f'Cannot insert comment for data: {post_id = }, {user_id = }, {reaction_type = }')
+            log.error(f'Cannot insert reaction for data: {post_id = }, {user_id = }, {reaction_type = }')
             api.abort(500, 'Database Error')
         
         json_data = {
@@ -81,7 +127,7 @@ class Reaction(Resource):
                 'user_id': user_id,
                 'username': username,
                 'reaction_type': reaction_type,
-            'timestamp': timestamp
+            'timestamp': str(timestamp)
             }
         }
         try:
@@ -91,6 +137,14 @@ class Reaction(Resource):
 
         return {}, 201
 
+    @api.doc(params={
+        'Authorization': {
+            'description': 'Bearer token for authentication',
+            'required': True,
+            'in': 'header',
+            'default': 'Bearer '
+        }
+    })
     @api.expect(delete_reaction_model, validate=True)
     @api.response(200, 'OK')
     @api.response(400, 'Bad Request')

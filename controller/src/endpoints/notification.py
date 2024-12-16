@@ -14,6 +14,15 @@ log = logging.getLogger('NOTIFICATION')
 
 api = Namespace('notification')
 
+auth_parser = api.parser()
+auth_parser.add_argument(
+    'Authorization', 
+    location='headers', 
+    required=True, 
+    help='Bearer token for authentication',
+    type=str,
+    default='Bearer ',
+)
 
 base_model = api.model(
     'Base Notification Model', 
@@ -78,10 +87,13 @@ class Notification(Resource):
     @api.doc(
         params={
             'last_timestamp': {'description': 'Timestamp of last fetched notification', 'type': str, 'required': True},
-            'quantity': {'description': 'Quantity of reactions to fetch', 'type': int, 'default': 10, 'required': True}
-        },
-        headers={
-            'Authorization': {'description': 'Bearer token for authentication', 'required': True}
+            'quantity': {'description': 'Quantity of reactions to fetch', 'type': int, 'default': 10, 'required': True},
+            'Authorization': {
+                'description': 'Bearer token for authentication',
+                'required': True,
+                'in': 'header',
+                'default': 'Bearer '
+            }
         }
     )
     @api.marshal_list_with(get_model, code=200)
@@ -148,11 +160,14 @@ class Notification(Resource):
 
         return formatted_results, 200
     
-    @api.doc(
-        headers={
-            'Authorization': {'description': 'Bearer token for authentication', 'example': 'Bearer ', 'required': True}
+    @api.doc(params={
+        'Authorization': {
+            'description': 'Bearer token for authentication',
+            'required': True,
+            'in': 'header',
+            'default': 'Bearer '
         }
-    )
+    })
     @api.expect(delete_model, validate=True)
     @api.response(200, 'OK')
     @api.response(400, 'Bad Request')
