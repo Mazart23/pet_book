@@ -3,8 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { fetchProfilePicture } from "@/app/Api";
 import { FaTrashAlt } from "react-icons/fa";
+import { SiDatadog } from "react-icons/si";
 import { MdLocationOn, MdLocationOff } from "react-icons/md";
 import MapModal from "../Map";
+import { NotificationData } from "@/types/notificationData";
+import { getColorFromUsername } from "@/app/layout";
 
 const Notification = ({
   type,
@@ -16,10 +19,10 @@ const Notification = ({
   type: string;
   id: string;
   timestamp: string;
-  data: object;
+  data: NotificationData;
   onRemove: (type: string, id: string) => void;
 }) => {
-  const [imageUrl, setImageUrl] = useState();
+  const [imageUrl, setImageUrl] = useState<string | null | undefined>(undefined);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false)
 
   const fetchImage = async (userId) => {
@@ -28,7 +31,7 @@ const Notification = ({
         setImageUrl(profileUrl);
       })
       .catch((error) => {
-        throw error;
+        setImageUrl(null);
       });
   };
 
@@ -63,11 +66,24 @@ const Notification = ({
                 />
               )
             ):(
-              <>
-              {imageUrl && 
-                <Image src={imageUrl} fill/>
-              }
-              </>
+              imageUrl === undefined ? (
+                <></>
+              ) : imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  fill
+                  alt="User profile picture"
+                  className="rounded-md object-cover"
+                />
+              ) : (
+                <SiDatadog
+                  style={{
+                    height: "100%",
+                    width: "100%",
+                    color: getColorFromUsername(data.username)
+                  }}
+                />
+              )
             )}
           </div>
         </div>
@@ -116,7 +132,7 @@ const Notification = ({
                 >
                   {data.username}
                 </Link>
-                reacted on
+                reacted on the
                 <Link
                   href={`/post/${data.post_id}`}
                   className="mb-[6px] block text-base font-medium leading-snug text-black hover:text-primary dark:text-white dark:hover:text-primary"
