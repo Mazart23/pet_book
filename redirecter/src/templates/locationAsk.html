@@ -2,15 +2,130 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Udostępnij lokalizację</title>
-  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #main-content {
+      text-align: center;
+    }
+
+    h1 {
+      color: #0faf00e8;
+      margin-bottom: 10px;
+    }
+
+    h3 {
+      color: #b0bec5;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    img {
+      width: 200px;
+      height: auto;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background-color: #0faf00e8;
+      color: #121212;
+      border: none;
+      padding: 10px 20px;
+      font-size: 18px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #0faf00a4;
+      transform: scale(1.05);
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    #loading-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      color: #e0e0e0;
+    }
+
+    .spinner, .message-animation, .dog-animation {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 20px;
+    }
+
+    .spinner {
+      border: 6px solid #b0bec5;
+      border-top: 6px solid #0faf00e8;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #notification {
+      background-color: #333;
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      z-index: 2000;
+    }
+  </style>
 </head>
 <body>
-  <h1>PetBook</h1>
-  <h3>Nastąpiło zeskanowanie kodu QR użytkownika <strong>{{ username }}</strong>.</h3>
-  <h3>W celu zlokalizowania zwierzaka prosimy o udostępnienie lokalizacji klikając poniższy przycisk.</h3>
-  <button onclick="requestLocation()">Udostępnij lokalizację</button>
-  <button onclick="cancel()">Pomiń</button>
+  <div id="main-content">
+    <h1>PetBook</h1>
+    <img src="{{url_for('static', filename='images/logo.svg')}}">
+    <h3>You have just scanned <strong>{{ username }}</strong>'s QR code.</h3>
+    <h3>Please provide your location to help the owner find the pet by clicking the button below.</h3>
+    <button onclick="requestLocation()">Provide location</button>
+    <button onclick="cancel()">Skip</button>
+  </div>
+
+  <div id="loading-screen">
+    <div id="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+    <div id="loading-animation"></div>
+    <h3 id="loading-text">Loading...</h3>
+    <h3 id="notification"></h3>
+  </div>
 
   <script>
     const userId = "{{ user_id }}";
@@ -18,13 +133,59 @@
     const remoteAddr = "{{ remote_addr }}";
     const urlPost = "{{ url_post }}";
     const urlRedirect = "{{ url_redirect }}";
-    
-    function redirect(location_msg, send_msg) {
-      alert(`${location_msg}\n${send_msg}\nZatwierdź, aby wyświetlić profil ${username}.`);
-      window.location = urlRedirect;
+
+    const mainContent = document.getElementById('main-content');
+    const loadingScreen = document.getElementById('loading-screen');
+    const loadingText = document.getElementById('loading-text');
+    const loadingAnimation = document.getElementById('loading-animation');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const notification = document.getElementById('notification');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadingScreen.style.display = 'none';
+    });
+
+    function showNotification(message) {
+      notification.textContent = message;
+    }
+
+    function showLoading(message, animationClass) {
+      loadingScreen.style.display = 'flex';
+      loadingText.textContent = message;
+      if (animationClass === 'spinner') {
+        loadingSpinner.style.display = 'block';
+      } else {
+        loadingSpinner.style.display = 'none';
+        loadingAnimation.innerHTML = '';
+  
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        const source = document.createElement('source');
+        
+        if (animationClass === 'dog') {
+          source.src = "{{url_for('static', filename='animations/dog.webm')}}";
+        } else if (animationClass === 'message') {
+          source.src = "{{url_for('static', filename='animations/message.webm')}}";
+        }
+        
+        source.type = 'video/webm';
+        video.appendChild(source);
+        loadingAnimation.appendChild(video);
+      }
+    }
+
+    function redirectToProfile() {
+      showLoading(`Redirecting to ${username}'s profile`, 'dog');
+      setTimeout(() => {
+        window.location = urlRedirect;
+      }, 1000);
     }
 
     function notify(isLocationPassed, location_msg, latitude, longitude) {
+      showLoading(location_msg, 'message');
+
       let jsonData;
 
       if (isLocationPassed === true) {
@@ -34,13 +195,13 @@
           is_location_passed: isLocationPassed,
           latitude: latitude,
           longitude: longitude
-        }
+        };
       } else {
         jsonData = {
           user_id: userId,
           remote_addr: remoteAddr,
           is_location_passed: isLocationPassed
-        }
+        };
       }
 
       fetch(urlPost, {
@@ -51,40 +212,35 @@
         body: JSON.stringify(jsonData)
       })
         .then(response => {
-          let send_msg;
-
-          if (response.status === 200) {
-            send_msg = "Pomyślnie powiadomiono użytkownika o zeskanowaniu kodu QR.";
-          } else {
-            send_msg = "Nie udało się powiadomić użytkownika o zeskanowaniu kodu QR.";
+          if (response.status !== 200) {
+            showNotification("Failed to notify user about the scanned QR code.");
           }
-          
-          redirect(location_msg, send_msg);
         })
         .catch(error => {
-          send_msg = `Błąd podczas wysyłania powiadomienia o zeskanowaniu kodu QR: ${error.message}.`;
-          redirect(location_msg, send_msg);
+          showNotification("Failed to notify user about the scanned QR code.");
         });
+      redirectToProfile();
     }
 
     function requestLocation() {
+      showLoading("Getting your location...", 'spinner');
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            notify(true, "Pomyślnie uzyskano lokalizację.", latitude, longitude)
+            notify(true, "Location obtained successfully. Sending data...", latitude, longitude);
           },
           (error) => {
-            notify(false, `Nie udało się uzyskać lokalizacji: ${error.message}.`)
+            notify(false, "Unable to obtain location. Sending data...");
           }
         );
       } else {
-        notify(false, "Geolokalizacja nie jest obsługiwana w tej przeglądarce.")
+        notify(false, "Geolocation is not supported by this browser. Sending data...");
       }
     }
 
     function cancel() {
-      notify(false, "Pominięto udostępnianie lokalizacji.")
+      notify(false, "Location sharing skipped, sending data....");
     }
   </script>
 </body>

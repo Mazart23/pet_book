@@ -1,5 +1,5 @@
 import logging
-import datetime
+from datetime import datetime
 
 from flask import request
 from flask_restx import Resource, fields, Namespace
@@ -26,7 +26,7 @@ guest_model = api.model(
 scan_input_model = api.model(
     'Scan input model', {
         'user_id': fields.String(required=True, description='Unique ID of the user'),
-        'guest': fields.Nested(guest_model, required=True, description='Guest information')
+        'data': fields.Nested(guest_model, required=True, description='Guest information')
     }
 )
 
@@ -38,11 +38,11 @@ class Scan(Resource):
     @api.response(400, 'Bad Request')
     @api.response(500, 'Database Error')
     def post(self):
-        timestamp = str(datetime.datetime.now())
+        timestamp = datetime.now()
         json_data = request.get_json()
 
         user_id = json_data.get('user_id')
-        guest = json_data.get('guest')
+        guest = json_data.get('data')
         
         ip = guest.get('ip')
         city = guest.get('city')
@@ -51,14 +51,16 @@ class Scan(Resource):
 
         queries = db()
 
-        db_response = queries.insert_scan(user_id, ip, city, latitude, longitude, timestamp)
+        notification_id = queries.insert_scan(user_id, ip, city, latitude, longitude, timestamp)
 
-        if not db_response:
+        if not notification_id:
             api.abort(500, 'Database Error')
         
         send_json = {}
         send_json.update(json_data)
-        send_json.update({'timestamp': timestamp})
+        send_json.update({'notification_id': str(notification_id), 'timestamp': str(timestamp)})
+        send_json['data'].pop('ip')
+        send_json['user_owner_id'] = send_json.pop('user_id')
         
         try:
             send_request('POST', Services.NOTIFIER, '/emit/scan', json_data=send_json)

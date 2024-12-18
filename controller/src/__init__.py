@@ -1,5 +1,6 @@
 import os
 from logging import DEBUG
+from datetime import timedelta
 
 from flask import Flask, Blueprint
 from flask_restx import Api
@@ -11,6 +12,7 @@ from .utils.logger_config import config_logger
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
 CORS(app)
 config_logger(app, DEBUG)
@@ -26,6 +28,7 @@ from .endpoints.config import api as config
 from .endpoints.post import api as post
 from .endpoints.comment import api as comment
 from .endpoints.reaction import api as reaction
+from .endpoints.notification import api as notification
 
 
 api.add_namespace(user)
@@ -34,5 +37,6 @@ api.add_namespace(config)
 api.add_namespace(post)
 api.add_namespace(comment)
 api.add_namespace(reaction)
+api.add_namespace(notification)
 
 app.register_blueprint(blueprint)
