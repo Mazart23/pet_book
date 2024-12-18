@@ -1,6 +1,8 @@
+"use client";
+
 import SectionTitle from "../Common/SectionTitle";
-import SingleBlog from "./SingleBlog";
-import blogData from "./blogData";
+import Post from "./Post";
+import postData from "./postData";
 
 const Blog = () => {
   return (
@@ -10,15 +12,14 @@ const Blog = () => {
     >
       <div className="container">
         <SectionTitle
-          title="Our Latest Blogs"
-          paragraph="There are many variations of passages of Lorem Ipsum available but the majority have suffered alteration in some form."
+          title="Home"
+          paragraph="See the latest posts!"
           center
         />
-
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-x-6 lg:gap-x-8 xl:grid-cols-3">
-          {blogData.map((blog) => (
-            <div key={blog.id} className="w-full">
-              <SingleBlog blog={blog} />
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-1 md:gap-x-6 lg:grid-cols-2 lg:gap-x-8 xl:grid-cols-2">
+          {postData.map((post) => (
+            <div key={post.id} className="w-full">
+              <Post post={post} />
             </div>
           ))}
         </div>

@@ -35,6 +35,18 @@ module.exports = {
       colors: {
         current: "currentColor",
         transparent: "transparent",
+        green: {
+          50: "#e9f7e9",
+          100: "#c9e9c9",
+          200: "#96d496",
+          300: "#6dcf6d",
+          400: "#4fc454",
+          500: "#3eb043",
+          600: "#34963a",
+          700: "#2b7c31",
+          800: "#215f26",
+          900: "#143b18",
+        },
         white: "#FFFFFF",
         black: "#121723",
         dark: "#1D2430",
@@ -69,7 +81,7 @@ module.exports = {
         btn: "0px 1px 2px rgba(4, 10, 34, 0.15)",
         "btn-hover": "0px 1px 2px rgba(0, 0, 0, 0.15)",
         "btn-light": "0px 1px 2px rgba(0, 0, 0, 0.1)",
-      },
+        "gradient": '0 0 0 8px rgba(37, 72, 212, 0.8), 0 0 0 16px rgba(95, 188, 238, 0.7), 0 0 0 24px rgba(156, 22, 223, 0.6)',      },
       dropShadow: {
         three: "0px 5px 15px rgba(6, 8, 15, 0.05)",
       },

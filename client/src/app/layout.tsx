@@ -15,6 +15,13 @@ import "../styles/index.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const getColorFromUsername = (username: string | undefined): string => {
+  if (!username) return "#33cc33";
+  const hash = Array.from(username).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const hue = hash % 360;
+  return `hsl(${hue}, 70%, 50%)`;
+};
+
 export default function RootLayout({
   children,
 } : {

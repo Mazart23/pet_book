@@ -56,10 +56,19 @@ class MongoDBConnect:
         collection = self.get_collection(collection_name)
         return collection.update_one(filter, new_values, session=session)
 
+    def delete_one(self, collection_name: str, filter: dict, session: pymongo.client_session.ClientSession | None = None) -> pymongo.results.InsertOneResult:
+        collection = self.get_collection(collection_name)
+        return collection.delete_one(filter, session=session)
+    
     def find(self, collection_name: str, filter: dict = {}, projection=None) -> list[dict]:
         collection = self.get_collection(collection_name)
         return list(collection.find(filter, projection))
     
-    def find_one(self, collection_name: str, filter: dict) -> dict:
+    def find_one(self, collection_name: str, filter: dict = {}, projection=None) -> dict:
         collection = self.get_collection(collection_name)
-        return collection.find_one(filter)
+        return collection.find_one(filter, projection)
+
+    def find_aggregate(self, collection_name: str, pipeline: list[dict]) -> list[dict]:
+        collection = self.get_collection(collection_name)        
+        return list(collection.aggregate(pipeline))
+    
