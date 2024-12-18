@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import Lottie from "react-lottie";
+import catAnimation from "@/static/animations/cat.json"
 import Notification from "./Notification";
 import { getNotifications, deleteNotification } from "@/app/Api";
 import useToken from "../contexts/TokenContext";
@@ -125,12 +127,17 @@ const NotificationSidebar = () => {
             ) : (
               isLoading ? (
                 <div className="flex items-center h-16 w-16 mb-6">
-                  <video
-                    src="/animations/hamster.webm"
-                    autoPlay
-                    loop
-                    muted
-                    className="h-[90%] object-contain"
+                  <Lottie 
+                    options={{
+                      loop: true,
+                      autoplay: true,
+                      animationData: catAnimation,
+                      rendererSettings: {
+                        preserveAspectRatio: 'xMidYMid slice'
+                      }
+                    }}
+                    height={100} 
+                    width={100} 
                   />
                 </div>
               ):(

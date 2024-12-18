@@ -28,6 +28,7 @@
         "react-leaflet": "^4.2.1",
         "react-modal-video": "^2.0.1",
         "react-router-dom": "^6.27.0",
+        "react-lottie": "^1.2.10",
         "socket.io": "^4.5.1",
         "socket.io-client": "^4.5.1",
         "web-vitals": "^2.1.4"

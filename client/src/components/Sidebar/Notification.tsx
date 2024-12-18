@@ -56,8 +56,8 @@ const Notification = ({
   return (
     <div className="flex items-center">
       <div className="mr-5 xl:mb-0">
-        <div className="relative h-[60px] w-[60px] rounded-md sm:h-[75px] sm:w-[75px] flex justify-center items-center">
-          <div className={`w-[70%] h-[70%] ${imageUrl || !["reaction", "comment"].includes(type) ? "animate__animated animate__fadeInLeft" : ""}`}>
+        <div className="relative h-[60px] w-[60px] rounded-md flex justify-center items-center">
+          <div className={`w-10 h-10 ${imageUrl || !["reaction", "comment"].includes(type) ? "animate__animated animate__fadeInLeft" : ""}`}>
             { type === "scan" ? (
               (data.city && data.latitude && data.longitude) ? (
                 <MdLocationOn
@@ -80,11 +80,11 @@ const Notification = ({
                     src={imageUrl}
                     fill
                     alt="User profile picture"
-                    className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-4 border-solid border-violet-700 shadow-lg hover:shadow-xl shadow-gradient"
+                    className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-lg hover:shadow-xl shadow-gradient"
                   />
                 ) : (
                   <SiDatadog 
-                    className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-4 border-solid border-violet-700 shadow-lg hover:shadow-xl shadow-gradient" 
+                    className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-lg hover:shadow-xl shadow-gradient" 
                     style={{
                       color: getColorFromUsername(data.username),
                     }}
@@ -95,7 +95,7 @@ const Notification = ({
           </div>
         </div>
       </div>
-      <div className="w-full">
+      <div className="w-full text-black dark:text-white">
         {
           {
             "scan":

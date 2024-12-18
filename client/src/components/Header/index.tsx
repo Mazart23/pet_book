@@ -204,14 +204,14 @@ const Header = () => {
                     >
                       Logout
                     </Link>
-                    <div className={`h-14 w-14 relative ${imageUrl ? "animate__animated animate__fadeInTop" : ""}`}>
+                    <div className={`h-12 w-12 relative ${imageUrl ? "animate__animated animate__fadeInTop" : ""}`}>
                     {imageUrl && 
                       <Link href="/">
                           <Image
                             src={imageUrl}
                             fill
                             alt="User profile picture"
-                            className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-4 border-solid border-violet-700 shadow-lg hover:shadow-xl shadow-gradient"
+                            className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-lg hover:shadow-xl shadow-gradient"
                           />
                       </Link>
                     }
