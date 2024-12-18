@@ -70,7 +70,7 @@ export async function getNotifications(token, lastTimestamp=null) {
   return axios
     .get(`${services.controller.url}/notification/`, {
       params: {
-        quantity: 2,
+        quantity: 3,
         last_timestamp: lastTimestamp
       },
       headers: {

@@ -1,5 +1,6 @@
 import os
 from logging import DEBUG
+from datetime import timedelta
 
 from flask import Flask, Blueprint
 from flask_restx import Api
@@ -11,6 +12,7 @@ from .utils.logger_config import config_logger
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
 CORS(app)
 config_logger(app, DEBUG)

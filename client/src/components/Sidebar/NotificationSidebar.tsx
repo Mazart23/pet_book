@@ -23,7 +23,7 @@ const NotificationSidebar = () => {
       getNotifications(token, lastTimestamp).then((data) => {
         if (data) {
           setNotifications((prevNotifications) => prevNotifications.concat(data));
-          if (data.length === 0) {
+          if (data.length < 3) {
             setIsAllLoaded(true);
           }
           else {
@@ -54,7 +54,7 @@ const NotificationSidebar = () => {
       getNotifications(token).then((data) => {
         if (data) {
           setNotifications(data);
-          if (data.length < 2) {
+          if (data.length < 3) {
             setIsAllLoaded(true);
           }
           setLastTimestamp(data.at(-1).timestamp);
@@ -114,7 +114,8 @@ const NotificationSidebar = () => {
                 onRemove={handleRemoveNotification}
               />
             </li>
-          ))}
+          ))
+        }
         {isLoaded && (
           <div className="flex justify-center">
             {isAllLoaded ? (
@@ -135,7 +136,7 @@ const NotificationSidebar = () => {
               ):(
                 <span
                   onClick={fetchNotifications}
-                  className="mt-16 mb-10 text-base font-large leading-snug text-green-500 hover:text-green-600 outline-none border-none cursor-pointer"
+                  className="mt-16 mb-10 text-base font-large leading-snug text-green-400 hover:text-green-500 outline-none border-none cursor-pointer"
                 >
                   Load more
                 </span>

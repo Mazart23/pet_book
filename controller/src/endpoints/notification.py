@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from flask import request
 from flask_restx import Resource, fields, Namespace
@@ -111,11 +112,13 @@ class Notification(Resource):
             log.error(f'Got {quantity = }, quantity is required and must be a positive integer')
             api.abort(400, 'Bad Request')
         
-        last_timestamp = request.args.get('last_timestamp', None, type=str)
+        last_timestamp = request.args.get('last_timestamp', None)
+        if last_timestamp:
+            last_timestamp = datetime.strptime(last_timestamp, "%Y-%m-%d %H:%M:%S")
         
         queries = db()
         raw_results = queries.get_notifications(user_id, last_timestamp, quantity)
-
+        print(raw_results)
         if raw_results is False:
             log.info('Problem during getting notifications')
             api.abort(500, 'Database Error')

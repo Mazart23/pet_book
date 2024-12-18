@@ -207,7 +207,7 @@ class UserPicture(Resource):
         if not user:
             api.abort(404, "User not found")
 
-        return {"profile_picture_url": user.get("profile_picture_url", None)}, 200
+        return {"profile_picture_url": user.get("profile_picture_url", '')}, 200
 
     @api.doc(
         consumes=["multipart/form-data"],

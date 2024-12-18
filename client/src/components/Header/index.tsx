@@ -6,10 +6,14 @@ import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler";
 import menuData from "./menuData";
 import useToken from "../contexts/TokenContext";
+import useWebsocket from "../contexts/WebsocketContext";
+import jwtDecode from "jwt-decode";
+import { fetchProfilePicture } from "@/app/Api";
 
 const Header = () => {
   // Token state
   const {token, removeToken} = useToken();
+  const { socket } = useWebsocket();
 
   // Navbar toggle
   const [navbarOpen, setNavbarOpen] = useState(false);
@@ -39,6 +43,27 @@ const Header = () => {
       setOpenIndex(index);
     }
   };
+
+  // Profile picture state
+  const [imageUrl, setImageUrl] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.sub;
+      fetchProfilePicture(userId)
+        .then((profileUrl) => {
+          if (profileUrl === "") {
+            setImageUrl(null);
+          } else {
+            setImageUrl(profileUrl);
+          }
+        })
+        .catch((error) => {
+          setImageUrl(null);
+        });
+    };
+  }, [token, socket]);
 
   const usePathName = usePathname();
 
@@ -167,14 +192,31 @@ const Header = () => {
                 </nav>
               </div>
               <div className="flex items-center justify-end pr-16 lg:pr-0">
+                <div>
+                  <ThemeToggler />
+                </div>
                 {token ? (
-                  <Link
-                    href="/"
-                    onClick={handleLogout}
-                    className="hidden px-7 py-3 text-base font-medium text-dark hover:opacity-70 dark:text-white md:block"
-                  >
-                    Logout
-                  </Link>
+                  <>
+                    <Link
+                      href="/"
+                      onClick={handleLogout}
+                      className="hidden px-7 py-3 text-base font-medium text-dark hover:opacity-70 dark:text-white md:block"
+                    >
+                      Logout
+                    </Link>
+                    <div className={`h-14 w-14 relative ${imageUrl ? "animate__animated animate__fadeInTop" : ""}`}>
+                    {imageUrl && 
+                      <Link href="/">
+                          <Image
+                            src={imageUrl}
+                            fill
+                            alt="User profile picture"
+                            className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-4 border-solid border-violet-700 shadow-lg hover:shadow-xl shadow-gradient"
+                          />
+                      </Link>
+                    }
+                    </div>
+                  </>
                 ):(
                   <>
                     <Link
@@ -191,9 +233,6 @@ const Header = () => {
                     </Link>
                   </>
                 )}
-                <div>
-                  <ThemeToggler />
-                </div>
               </div>
             </div>
           </div>

@@ -28,7 +28,11 @@ const Notification = ({
   const fetchImage = async (userId) => {
     fetchProfilePicture(userId)
       .then((profileUrl) => {
-        setImageUrl(profileUrl);
+        if (profileUrl === "") {
+          setImageUrl(null);
+        } else {
+          setImageUrl(profileUrl);
+        }
       })
       .catch((error) => {
         setImageUrl(null);
@@ -53,37 +57,40 @@ const Notification = ({
     <div className="flex items-center">
       <div className="mr-5 xl:mb-0">
         <div className="relative h-[60px] w-[60px] rounded-md sm:h-[75px] sm:w-[75px] flex justify-center items-center">
-          <div className="w-[70%] h-[70%] animate__animated animate__fadeInLeft">
+          <div className={`w-[70%] h-[70%] ${imageUrl || !["reaction", "comment"].includes(type) ? "animate__animated animate__fadeInLeft" : ""}`}>
             { type === "scan" ? (
               (data.city && data.latitude && data.longitude) ? (
                 <MdLocationOn
                   onClick={handleOpenMap}         
-                  className="text-green-500 w-full h-full transition-all duration-300 ease-in-out hover:text-green-600 hover:translate-y-[-5px] cursor-pointer"
+                  className="text-green-500 w-full h-full transition-all duration-300 ease-in-out hover:text-green-600 hover:translate-y-[-5px] cursor-pointer p-[2px]"
                 />
               ):(
                 <MdLocationOff         
-                  className="text-body-color w-full h-full"
+                  className="text-body-color w-full h-full p-[2px]"
                 />
               )
             ):(
-              imageUrl === undefined ? (
-                <></>
-              ) : imageUrl ? (
-                <Image
-                  src={imageUrl}
-                  fill
-                  alt="User profile picture"
-                  className="rounded-md object-cover"
-                />
-              ) : (
-                <SiDatadog
-                  style={{
-                    height: "100%",
-                    width: "100%",
-                    color: getColorFromUsername(data.username)
-                  }}
-                />
-              )
+              <Link
+                href={`/profile/${data.username}`}
+              >
+                {imageUrl === undefined ? (
+                  <></>
+                ) : imageUrl ? (
+                  <Image
+                    src={imageUrl}
+                    fill
+                    alt="User profile picture"
+                    className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-4 border-solid border-violet-700 shadow-lg hover:shadow-xl shadow-gradient"
+                  />
+                ) : (
+                  <SiDatadog 
+                    className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-4 border-solid border-violet-700 shadow-lg hover:shadow-xl shadow-gradient" 
+                    style={{
+                      color: getColorFromUsername(data.username),
+                    }}
+                  />
+                )}
+              </Link>
             )}
           </div>
         </div>
@@ -94,53 +101,55 @@ const Notification = ({
             "scan":
               <>
                 <h3 className="text-black dark:text-white">
-                  Someone scanned your QR code!
+                  QR code scanned!
                 </h3>
                 {data.city && data.latitude && data.longitude &&
                   <span 
                     onClick={handleOpenMap} 
-                    className='mb-[6px] text-base font-small leading-snug text-green-500 hover:text-green-600 cursor-pointer outline-none border-none'
+                    className='mb-[6px] text-s font-small leading-snug text-green-400 hover:text-green-500 cursor-pointer outline-none border-none'
                   >
                     Location
                   </span>
                 }
               </>,
             "comment":
-              <h3 className="text-black dark:text-white">
-                User
+              <>
+                <h3 className="text-black dark:text-white">
+                  <Link
+                    href={`/post/${data.post_id}`}
+                    className="mb-[6px] text-base font-medium leading-snug text-green-400 hover:text-green-500 cursor-pointer outline-none border-none"
+                  >
+                    Post
+                  </Link>
+                  {" "}commented!
+                </h3>
+                User{" "}
                 <Link
                   href={`/profile/${data.username}`}
-                  className="mb-[6px] block text-base font-medium leading-snug text-black hover:text-primary dark:text-white dark:hover:text-primary"
+                  className="mb-[6px] text-s font-small leading-snug text-green-400 hover:text-green-500 cursor-pointer outline-none border-none"
                 >
                   {data.username}
                 </Link>
-                commented the
-                <Link
-                  href={`/post/${data.post_id}`}
-                  className="mb-[6px] block text-base font-medium leading-snug text-black hover:text-primary dark:text-white dark:hover:text-primary"
-                >
-                  post
-                </Link>
-                .
-              </h3>,
+              </>,
             "reaction":
-              <h3 className="text-black dark:text-white">
-                User
+              <>
+                <h3 className="text-black dark:text-white">
+                  <Link
+                    href={`/post/${data.post_id}`}
+                    className="mb-[6px] text-base font-medium leading-snug text-green-400 hover:text-green-500 cursor-pointer outline-none border-none"
+                  >
+                    Post
+                  </Link>
+                  <span> commented!</span>
+                </h3>
+                <span className="font-small">User </span>
                 <Link
                   href={`/profile/${data.username}`}
-                  className="mb-[6px] block text-base font-medium leading-snug text-black hover:text-primary dark:text-white dark:hover:text-primary"
+                  className="mb-[6px] text-s font-small leading-snug text-green-300 hover:text-green-500 cursor-pointer outline-none border-none"
                 >
                   {data.username}
                 </Link>
-                reacted on the
-                <Link
-                  href={`/post/${data.post_id}`}
-                  className="mb-[6px] block text-base font-medium leading-snug text-black hover:text-primary dark:text-white dark:hover:text-primary"
-                >
-                  post
-                </Link>
-                .
-              </h3>
+              </>
           }[type]
         }
         <p className="text-xs font-medium text-body-color">{timestamp}</p>

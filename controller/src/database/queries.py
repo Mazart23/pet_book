@@ -3,8 +3,6 @@ from bson.binary import Binary
 import logging
 from datetime import datetime
 
-from pymongo import DESCENDING
-
 from . import MongoDBConnect
 
 log = logging.getLogger('QUERIES')
@@ -46,61 +44,87 @@ class Queries(MongoDBConnect):
     
     def get_notifications(self, user_id: str, last_timestamp: datetime | None, quantity: int) -> list[dict] | bool:
         try:
-            filter = {
-                'user_id': ObjectId(user_id),
-                'is_notification': True,
-                'timestamp': {"$lt": last_timestamp}
-            } if last_timestamp else {
+            scans_filter = {
                 'user_id': ObjectId(user_id),
                 'is_notification': True
             }
+            filter = {
+                'is_notification': True
+            }
+
+            if last_timestamp:
+                timestamp_filter = {'timestamp': {"$lt": last_timestamp}}
+                scans_filter.update(timestamp_filter)
+                filter.update(timestamp_filter)
+
             pipeline = [
-                {"$match": filter},
+                {"$match": {"user_id": ObjectId(user_id)}},
                 {"$project": {
-                    "city": 1,
-                    "latitude": 1,
-                    "longitude": 1,
-                    "timestamp": {
-                        "$dateToString": {
-                            "format": "%Y-%m-%d %H:%M:%S",
-                            "date": "$timestamp"
-                        }
-                    }
+                    "_id": 1
                 }},
-                {"$unionWith": {
-                    "coll": "reactions",
+                {"$lookup": {
+                    "from": "comments",
+                    "localField": "_id",
+                    "foreignField": "post_id",
                     "pipeline": [
                         {"$match": filter},
                         {"$project": {
+                            "_id": 1,
+                            "post_id": 1,
+                            "user_id": 1,
+                            "timestamp": 1
+                        }}
+                    ],
+                    "as": "comments"
+                }},
+                
+                {"$lookup": {
+                    "from": "reactions",
+                    "localField": "_id",
+                    "foreignField": "post_id",
+                    "pipeline": [
+                        {"$match": filter},
+                        {"$project": {
+                            "_id": 1,
                             "post_id": 1,
                             "user_id": 1,
                             "reaction_type": 1,
-                            "timestamp": {
-                                "$dateToString": {
-                                    "format": "%Y-%m-%d %H:%M:%S",
-                                    "date": "$timestamp"
-                                }
-                            }
+                            "timestamp": 1
                         }}
-                    ]
+                    ],
+                    "as": "reactions"
                 }},
+                
+                {"$project": {
+                    "notifications": {
+                        "$concatArrays": [
+                            {"$ifNull": ["$comments", []]},
+                            {"$ifNull": ["$reactions", []]}
+                        ]
+                    }
+                }},
+                
+                {"$unwind": {"path": "$notifications", "preserveNullAndEmptyArrays": True}},
+                
+                {"$replaceRoot": {
+                    "newRoot": {
+                        "$ifNull": ["$notifications", {}]
+                    }
+                }},
+                
                 {"$unionWith": {
                     "coll": "scans",
                     "pipeline": [
-                        {"$match": filter},
+                        {"$match": scans_filter},
                         {"$project": {
                             "city": 1,
                             "latitude": 1,
                             "longitude": 1,
-                            "timestamp": {
-                                "$dateToString": {
-                                    "format": "%Y-%m-%d %H:%M:%S",
-                                    "date": "$timestamp"
-                                }
-                            }
+                            "timestamp": 1
                         }}
                     ]
                 }},
+
                 {"$addFields": {
                     "user_id_object": {"$toObjectId": "$user_id"}
                 }},
@@ -121,10 +145,23 @@ class Queries(MongoDBConnect):
                     "user_info": 0,
                     "user_id_object": 0
                 }},
-                {"$sort": {"timestamp": DESCENDING}},
+
+                {"$sort": {"timestamp": -1}},
+                {"$addFields": {
+                    "timestamp": {
+                        "$dateToString": {
+                            "format": "%Y-%m-%d %H:%M:%S",
+                            "date": "$timestamp"
+                        }
+                    }
+                }},
+                {"$match": {
+                    "timestamp": {"$ne": None}
+                }},
                 {"$limit": quantity}
             ]
-            return self.find_aggregate('comments', pipeline)
+
+            return self.find_aggregate('posts', pipeline)
 
         except Exception as e:
             log.error(f'Error fetching notifications: {e}')
