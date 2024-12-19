@@ -13,7 +13,18 @@ class Queries(MongoDBConnect):
     def get_user_by_id(self, id: str) -> dict:
         try:
             filter = {'_id': ObjectId(id)}
-            return self.find_one('users', filter)
+            projection = {
+                'username': True,
+                'bio': True,
+                'email': True,
+                'profile_picture_url': True,
+                'location': True,
+                'posts': True,
+                'scans': True,
+                'is_premium': True,
+                'is_private': True
+            }
+            return self.find_one('users', filter, projection)
         except Exception as e:
             log.error(f'Error fetching user: {e}')
             return {}
@@ -21,7 +32,16 @@ class Queries(MongoDBConnect):
     def get_user_by_username(self, username: str) -> dict:
         try:
             filter = {'username': username}
-            return self.find_one('users', filter)
+            projection = {
+                'username': True,
+                'bio': True,
+                'email': True,
+                'profile_picture_url': True,
+                'location': True,
+                'is_premium': True,
+                'is_private': True
+            }
+            return self.find_one('users', filter, projection)
         except Exception as e:
             log.error(f'Error fetching user: {e}')
             return {}
