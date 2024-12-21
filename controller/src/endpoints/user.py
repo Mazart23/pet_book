@@ -181,7 +181,7 @@ class Login(Resource):
 
         queries = db()
 
-        user = queries.get_user_by_username(username)
+        user = queries.get_user_password_by_username(username)
         
         if not user or not bcrypt.checkpw(password.encode('utf-8'), user['hashed_password']):
             api.abort(401, 'Unauthorized')
@@ -207,7 +207,7 @@ class Password(Resource):
         
         queries = db()
         
-        user = queries.get_user_by_username(username)
+        user = queries.get_user_password_by_username(username)
         
         if not user:
             api.abort(404, 'User not found')

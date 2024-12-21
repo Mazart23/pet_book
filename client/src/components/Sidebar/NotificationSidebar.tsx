@@ -23,7 +23,7 @@ const NotificationSidebar = () => {
     if (token && !isLoading) {
       setIsLoading(true);
       getNotifications(token, lastTimestamp).then((data) => {
-        if (data) {
+        if (data.length !== 0) {
           setNotifications((prevNotifications) => prevNotifications.concat(data));
           if (data.length < 3) {
             setIsAllLoaded(true);
@@ -51,21 +51,21 @@ const NotificationSidebar = () => {
   };
 
   useEffect(() => {
-    if (token) {
+    if (token && socket) {
       setIsLoading(true);
       getNotifications(token).then((data) => {
-        if (data) {
+        if (data.length !== 0) {
           setNotifications(data);
-          if (data.length < 3) {
-            setIsAllLoaded(true);
-          }
           setLastTimestamp(data.at(-1).timestamp);
+        }
+        if (data.length < 3) {
+          setIsAllLoaded(true);
         }
         setIsLoaded(true);
         setIsLoading(false);
       });
     }
-  }, [token]);
+  }, [socket]);
 
   useEffect(() => {
     if (socket) {

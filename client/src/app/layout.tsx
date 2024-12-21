@@ -8,6 +8,7 @@ import { Providers } from "./providers";
 import { ConfigProvider } from '../components/contexts/ConfigContext';
 import { TokenProvider } from '../components/contexts/TokenContext';
 import { WebsocketProvider } from "../components/contexts/WebsocketContext";
+import { UserProvider } from "@/components/contexts/UserContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Inter } from "next/font/google";
 import "node_modules/react-modal-video/css/modal-video.css";
@@ -39,12 +40,14 @@ export default function RootLayout({
         <ConfigProvider>
           <TokenProvider>
             <WebsocketProvider>
-              <Providers>
-                <Header />
-                {children}
-                <Footer />
-                <ScrollToTop />
-              </Providers>
+              <UserProvider>
+                <Providers>
+                  <Header />
+                  {children}
+                  <Footer />
+                  <ScrollToTop />
+                </Providers>
+              </UserProvider>
             </WebsocketProvider>
           </TokenProvider>
         </ConfigProvider>

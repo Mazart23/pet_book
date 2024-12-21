@@ -46,6 +46,18 @@ class Queries(MongoDBConnect):
             log.error(f'Error fetching user: {e}')
             return {}
         
+    def get_user_password_by_username(self, username: str) -> dict:
+        try:
+            filter = {'username': username}
+            projection = {
+                '_id': True,
+                'hashed_password': True,
+            }
+            return self.find_one('users', filter, projection)
+        except Exception as e:
+            log.error(f'Error fetching user: {e}')
+            return {}
+        
     def get_user_by_email(self, email: str) -> dict:
         try:
             filter = {'email': email}

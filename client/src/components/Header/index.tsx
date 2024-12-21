@@ -1,4 +1,5 @@
 "use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -6,14 +7,14 @@ import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler";
 import menuData from "./menuData";
 import useToken from "../contexts/TokenContext";
-import useWebsocket from "../contexts/WebsocketContext";
-import jwtDecode from "jwt-decode";
-import { fetchProfilePicture } from "@/app/Api";
+import useUser from "../contexts/UserContext";
+import { SiDatadog } from "react-icons/si";
+import { getColorFromUsername } from "@/app/layout";
 
 const Header = () => {
   // Token state
-  const {token, removeToken} = useToken();
-  const { socket } = useWebsocket();
+  const { token, removeToken } = useToken();
+  const { user } = useUser();
 
   // Navbar toggle
   const [navbarOpen, setNavbarOpen] = useState(false);
@@ -43,27 +44,6 @@ const Header = () => {
       setOpenIndex(index);
     }
   };
-
-  // Profile picture state
-  const [imageUrl, setImageUrl] = useState<string | null | undefined>(undefined);
-
-  useEffect(() => {
-    if (token) {
-      const decodedToken = jwtDecode(token);
-      const userId = decodedToken.sub;
-      fetchProfilePicture(userId)
-        .then((profileUrl) => {
-          if (profileUrl === "") {
-            setImageUrl(null);
-          } else {
-            setImageUrl(profileUrl);
-          }
-        })
-        .catch((error) => {
-          setImageUrl(null);
-        });
-    };
-  }, [token, socket]);
 
   const usePathName = usePathname();
 
@@ -204,15 +184,24 @@ const Header = () => {
                     >
                       Logout
                     </Link>
-                    <div className={`h-12 w-12 relative ${imageUrl ? "animate__animated animate__fadeInTop" : ""}`}>
-                    {imageUrl && 
-                      <Link href="/">
-                          <Image
-                            src={imageUrl}
-                            fill
-                            alt="User profile picture"
-                            className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-lg hover:shadow-xl shadow-gradient"
-                          />
+                    <div className={`h-12 w-12 relative ${user?.profile_picture_url !== undefined ? "animate__animated animate__fadeInTop" : ""}`}>
+                    {user?.profile_picture_url !== undefined && 
+                      <Link href={`/profile/${user.username}`}>
+                          { user.profile_picture_url === "" ? (
+                            <SiDatadog 
+                              className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-lg hover:shadow-xl shadow-gradient" 
+                              style={{
+                                color: getColorFromUsername(user.username),
+                              }}
+                            />
+                          ):(
+                            <Image
+                              src={user.profile_picture_url}
+                              fill
+                              alt="User profile picture"
+                              className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-lg hover:shadow-xl shadow-gradient"
+                            />
+                          )}
                       </Link>
                     }
                     </div>

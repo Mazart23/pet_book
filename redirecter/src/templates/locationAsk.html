@@ -100,7 +100,7 @@
       padding: 10px;
       border-radius: 5px;
       position: fixed;
-      top: 10px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -143,9 +143,11 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadingScreen.style.display = 'none';
+      notification.style.display = 'none';
     });
 
     function showNotification(message) {
+      notification.style.display = 'block';
       notification.textContent = message;
     }
 
@@ -218,8 +220,10 @@
         })
         .catch(error => {
           showNotification("Failed to notify user about the scanned QR code.");
-        });
-      redirectToProfile();
+        })
+        .finally(() => {
+          redirectToProfile();
+        })
     }
 
     function requestLocation() {

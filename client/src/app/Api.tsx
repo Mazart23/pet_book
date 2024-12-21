@@ -32,6 +32,20 @@ export async function fetchProfilePicture(userId) {
     });
 }
 
+export async function fetchUserSelfData(token) {
+  await servicesWait();
+  return axios
+    .get(`${services.controller.url}/user/self`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    })
+    .then((response) => response.data)
+    .catch((error) => {
+      throw error;
+    });
+}
+
 export async function uploadProfilePicture(token, selectedFile) {
   await servicesWait();
 
