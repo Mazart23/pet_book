@@ -24,7 +24,7 @@ const menuData: Menu[] = [
   {
     id: 3,
     title: <FaInfoCircle size={26}/>,
-    path: "/info",
+    path: "/about",
     newTab: false,
   },
   {
@@ -60,18 +60,6 @@ const menuData: Menu[] = [
         id: 45,
         title: "Blog Details Page",
         path: "/blog-details",
-        newTab: false,
-      },
-      {
-        id: 46,
-        title: "Sign In Page",
-        path: "/login",
-        newTab: false,
-      },
-      {
-        id: 47,
-        title: "Sign Up Page",
-        path: "/signup",
         newTab: false,
       },
       {

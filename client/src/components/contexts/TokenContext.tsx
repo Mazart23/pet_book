@@ -1,4 +1,7 @@
+"use client";
+
 import React, { createContext, useContext, useState } from "react";
+import { useRouter } from "next/navigation";
 import Cookies from 'js-cookie'
 
 const TokenContext = createContext();
@@ -9,6 +12,7 @@ export const TokenProvider = ({ children }) => {
   const [token, setToken] = useState(() => {
     return Cookies.get("token") || null;
   });
+  const router = useRouter();
 
   const saveToken = (newToken) => {
     Cookies.set("token", newToken);
@@ -18,6 +22,7 @@ export const TokenProvider = ({ children }) => {
   const removeToken = () => {
     Cookies.remove("token");
     setToken(null);
+    router.push("/about");
   };
 
   const contextValue = {
