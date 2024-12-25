@@ -74,14 +74,7 @@ const Header = () => {
                   alt="logo"
                   width={60}
                   height={60}
-                  className="w-[80px] dark:hidden"
-                />
-                <Image
-                  src="/images/logo/logo.svg"
-                  alt="logo"
-                  width={60}
-                  height={60}
-                  className="hidden w-[80px] dark:block"
+                  className="w-[80px]"
                 />
               </Link>
             </div>
@@ -193,7 +186,7 @@ const Header = () => {
                       <Link href={`/profile/${user.username}`}>
                           { user.profile_picture_url === "" ? (
                             <SiDatadog 
-                              className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-lg hover:shadow-xl shadow-gradient" 
+                              className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-md hover:shadow-lg shadow-indigo-900" 
                               style={{
                                 color: getColorFromUsername(user.username),
                               }}
@@ -203,7 +196,7 @@ const Header = () => {
                               src={user.profile_picture_url}
                               fill
                               alt="User profile picture"
-                              className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-lg hover:shadow-xl shadow-gradient"
+                              className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-md hover:shadow-lg shadow-indigo-900"
                             />
                           )}
                       </Link>

@@ -82,11 +82,11 @@ const Notification = ({
                     src={imageUrl}
                     fill
                     alt="User profile picture"
-                    className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-lg hover:shadow-xl shadow-gradient"
+                    className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-md hover:shadow-lg shadow-indigo-900"
                   />
                 ) : (
                   <SiDatadog 
-                    className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-lg hover:shadow-xl shadow-gradient" 
+                    className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-md hover:shadow-lg shadow-indigo-900" 
                     style={{
                       color: getColorFromUsername(data.username),
                     }}
