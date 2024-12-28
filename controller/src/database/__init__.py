@@ -60,6 +60,10 @@ class MongoDBConnect:
         collection = self.get_collection(collection_name)
         return collection.delete_one(filter, session=session)
     
+    def find_one_and_delete(self, collection_name: str, filter: dict, session: pymongo.client_session.ClientSession | None = None) -> pymongo.results.InsertOneResult:
+        collection = self.get_collection(collection_name)
+        return collection.find_one_and_delete(filter, session=session)
+
     def find(self, collection_name: str, filter: dict = {}, projection=None) -> list[dict]:
         collection = self.get_collection(collection_name)
         return list(collection.find(filter, projection))

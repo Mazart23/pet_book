@@ -142,7 +142,7 @@ const Notification = ({
                   >
                     Post
                   </Link>
-                  <span> commented!</span>
+                  <span> reacted!</span>
                 </h3>
                 <span className="font-small">User </span>
                 <Link

@@ -285,29 +285,56 @@ class Queries(MongoDBConnect):
     @MongoDBConnect.transaction
     def insert_reaction(self, post_id: str, user_id: str, reaction_type: str, timestamp: datetime, session=None) -> str | bool:
         try:
-            document = {
+            filter = {
                 'post_id': ObjectId(post_id), 
                 'user_id': ObjectId(user_id), 
-                'reaction_type': reaction_type, 
-                'timestamp': timestamp, 
-                'is_notification': True
             }
-            result = self.insert_one('reactions', document)
-            
-            inserted_id = result.inserted_id
+            find_result = self.find_one('reactions', filter)
 
-            update_result = self.update_one(
-                'posts',
-                {'_id': ObjectId(post_id)},
-                {'$push': {'reactions': inserted_id}},
-                session=session
-            )
+            if find_result:
+                if find_result.get('reaction_type') == reaction_type:
+                    return False
+                
+                inserted_id = str(find_result.get('_id'))
+                update_values = {
+                    '$set': {
+                        'reaction_type': reaction_type, 
+                        'timestamp': timestamp, 
+                        'is_notification': True
+                    }
+                }
+                update_result = self.update_one('reactions', filter, update_values, session=session)
 
-            if update_result.modified_count == 0:
-                log.info(f"Reaction with id {inserted_id} not updated")
-                return False
-            
-            return str(inserted_id)
+                if update_result.modified_count == 0:
+                    log.info(f"Reaction with id {inserted_id} not updated")
+                    return False
+                
+                return inserted_id
+
+            else:
+                document = {
+                    'post_id': ObjectId(post_id), 
+                    'user_id': ObjectId(user_id), 
+                    'reaction_type': reaction_type, 
+                    'timestamp': timestamp, 
+                    'is_notification': True
+                }
+                result = self.insert_one('reactions', document, session=session)
+
+                inserted_id = result.inserted_id
+
+                update_result = self.update_one(
+                    'posts',
+                    {'_id': ObjectId(post_id)},
+                    {'$push': {'reactions': inserted_id}},
+                    session=session
+                )
+
+                if update_result.modified_count == 0:
+                    log.info(f"Reaction with id {inserted_id} not updated")
+                    return False
+                
+                return str(inserted_id)
         
         except Exception as e:
             log.error(f"Error inserting reaction with data {post_id = }, {user_id = }, {reaction_type = }, Error: {e}")
@@ -385,33 +412,34 @@ class Queries(MongoDBConnect):
             return False
     
     @MongoDBConnect.transaction
-    def delete_reaction(self, reaction_id: str, post_id: str, session=None) -> bool:
+    def delete_reaction(self, user_id: str, post_id: str, session=None) -> bool:
         try:
-            delete_result = self.delete_one(
+            delete_result = self.find_one_and_delete(
                 'reactions',
                 {
-                    "_id": ObjectId(reaction_id)
+                    'user_id': ObjectId(user_id),
+                    'post_id': ObjectId(post_id)
                 },
                 session=session
             )
             
-            if delete_result.deleted_count == 0:
-                log.info(f"Reaction not deleted for {reaction_id = }, {post_id = }")
+            if not delete_result:
+                log.info(f"Reaction not deleted for {user_id = }, {post_id = }")
                 return False
 
             update_result = self.update_one(
                 'posts',
                 {'_id': ObjectId(post_id)},
-                {'$pull': {'reactions': ObjectId(reaction_id)}},
+                {'$pull': {'reactions': delete_result.get('_id')}},
                 session=session
             )
 
             if update_result.modified_count == 0:
-                log.info(f"Reaction not removed from post {post_id = }, {reaction_id = }")
+                log.info(f"Reaction not removed from post for {user_id = }, {post_id = }")
                 return False
             
             return True
         
         except Exception as e:
-            log.error(f"Error during deleting reaction: {reaction_id = }, {post_id = }, Error = {e}")
+            log.error(f"Error during deleting reaction for {user_id = }, {post_id = }, Error = {e}")
             return False

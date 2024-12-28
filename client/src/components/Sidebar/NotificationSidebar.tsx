@@ -25,13 +25,11 @@ const NotificationSidebar = () => {
       getNotifications(token, lastTimestamp).then((data) => {
         if (data.length !== 0) {
           setNotifications((prevNotifications) => prevNotifications.concat(data));
-          if (data.length < 3) {
-            setIsAllLoaded(true);
-          }
-          else {
-            const newLastTimestamp = data.at(-1).timestamp;
-            setLastTimestamp(newLastTimestamp);
-          }
+          const newLastTimestamp = data.at(-1).timestamp;
+          setLastTimestamp(newLastTimestamp);
+        } 
+        if (data.length < 3) {
+          setIsAllLoaded(true);
         }
         setIsLoading(false);
       });

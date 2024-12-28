@@ -6,15 +6,40 @@ import Link from "next/link";
 import Lottie from "react-lottie";
 import loaderAnimation from "@/static/animations/loader.json"
 import { Post } from "@/types/post";
-import { fetchProfilePicture } from "@/app/Api";
+import { fetchProfilePicture, fetchReaction, deleteReaction, putReaction } from "@/app/Api";
 import { getColorFromUsername } from "@/app/layout";
 import { SiDatadog } from "react-icons/si";
+import useToken from "../contexts/TokenContext";
+import useUser from "../contexts/UserContext";
+
+const reactionsArray = [
+  {"type": "good", "text": "Good", "count": 0}, 
+  {"type": "heart", "text": "Heart", "count": 0}, 
+  {"type": "haha", "text": "Haha", "count": 0}, 
+  {"type": "wow", "text": "Wow", "count": 0}, 
+  {"type": "p", "text": "Playful", "count": 0}, 
+  {"type": "cry", "text": "Sad", "count": 0}
+];
+
+const updateReactionsCount = (reactions) => {
+  const counts = reactions.reduce((acc, reaction) => {
+    acc[reaction.reaction_type] = (acc[reaction.reaction_type] || 0) + 1;
+    return acc;
+  }, {});
+
+  return reactionsArray.map((reaction) => ({
+    ...reaction,
+    count: counts[reaction.type] || 0,
+  }));
+};
 
 const Post = ({ post }: { post: Post }) => {
   const { id, content, images, user, location, timestamp, comments, reactions } = post;
-
+  const [selectedReactionNum, setSelectedReactionNum] = useState<number | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null | undefined>(undefined);
-  const reactionsArray = [{"type": "good", "text": "Good"}, {"type": "heart", "text": "Heart"}, {"type": "haha", "text": "Haha"}, {"type": "wow", "text": "Wow"}, {"type": "p", "text": "Playful"}, {"type": "cry", "text": "Sad"}];
+  const [reactionsCounts, setReactionsCounts] = useState(reactionsArray);
+  const {token} = useToken();
+  const {currentUser} = useUser();
 
   useEffect(() => {
     fetchProfilePicture(user.id)
@@ -28,7 +53,35 @@ const Post = ({ post }: { post: Post }) => {
       .catch((error) => {
         setImageUrl(null);
       });
-  }, []);
+  }, [user.id]);
+
+  useEffect(() => {
+    const updatedReactions = updateReactionsCount(post.reactions);
+    const userReactionType = reactions.find((reaction) => reaction.user_id === currentUser.id)?.reaction_type;
+
+    if (userReactionType) {
+      const userReactionIndex = updatedReactions.findIndex((reaction) => reaction.type === userReactionType);
+
+      if (userReactionIndex !== -1) {
+        updatedReactions[userReactionIndex].count -= 1;
+        setSelectedReactionNum(userReactionIndex);
+      }
+    } else {
+      setSelectedReactionNum(null);
+    }
+
+    setReactionsCounts(updatedReactions);
+  }, [post.reactions, user.id]);
+
+  const changeReaction = (reactionNum) => {
+    if (reactionNum === selectedReactionNum) {
+      setSelectedReactionNum(null);
+      deleteReaction(token, id);
+    } else {
+      setSelectedReactionNum(reactionNum);
+      putReaction(token, reactionsArray.at(reactionNum).type, id);
+    }
+  }
 
   return (
     <div className="group relative overflow-hidden rounded-sm bg-white shadow-one duration-300 hover:shadow-two dark:bg-dark dark:hover:shadow-gray-dark">
@@ -100,22 +153,23 @@ const Post = ({ post }: { post: Post }) => {
             ))}
           </div>
           <div className="mx-1 h-16 w-px bg-body-color dark:bg-white opacity-10"></div>
-          {reactionsArray.map((reaction) => (
-            <div className="ml-1 flex flex-col items-center justify-center">
-              <p className="mb-[2px] text-xs text-body-color">
+          {reactionsCounts.map((reaction, index) => (
+            <div key={reaction.type} className="ml-1 flex flex-col items-center justify-center">
+              <p className={`mb-[2px] text-xs ${selectedReactionNum === index ? "text-dark dark:text-white" : "text-body-color"}`}>
                 {reaction.text}
               </p>
-              {reaction.count ? (
-                <p className="mb-1 text-xs text-body-color">{reaction.count}</p>
-              ):(
-                <p className="mb-1 text-xs text-body-color">0</p>
-              )}
+              <p className={`mb-1 text-xs ${selectedReactionNum === index ? "text-dark dark:text-white" : "text-body-color"}`}>
+                {reaction.count + (selectedReactionNum === index ? 1 : 0)}
+              </p>
               <div className="relative h-8 w-8">
                 <Image
                   src={`/images/reactions/${reaction.type}.svg`}
                   fill
                   alt={reaction.text}
-                  className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-150 hover:translate-y-2 cursor-pointer border-2 border-solid border-indigo-900 shadow-xs hover:shadow-sm shadow-indigo-900"
+                  onClick={() => changeReaction(index)}
+                  className={`h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out cursor-pointer border-2 border-solid
+                    ${selectedReactionNum === index ? "scale-150 translate-y-2 border-green-600 shadow-green-600 shadow-md" : "hover:scale-150 hover:translate-y-2 border-indigo-900 shadow-indigo-900 shadow-xs hover:shadow-sm "}`
+                  }
                 />
               </div>
             </div>

@@ -1,22 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import useToken from "../contexts/TokenContext";
 import SectionTitle from "../Common/SectionTitle";
 import Post from "./Post";
 import postData from "./postData";
 
 const Blog = () => {
-  const {token} = useToken();
-  const router = useRouter();
-  
-  useEffect(() => {
-    if (!token) {
-      router.push("/about")
-    }
-  }, [token])
-  
   return (
     <section
       id="blog"

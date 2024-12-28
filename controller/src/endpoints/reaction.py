@@ -28,11 +28,10 @@ auth_parser.add_argument(
 get_reactions_model = api.model(
     'Get reactions model', 
     {
-        'reaction_id': fields.String(required=True, description='Unique ID of the reaction'),
         'post_id': fields.String(required=True, description='Unique ID of the reacted post'),
         'user_id': fields.String(required=True, description='Unique ID of the user who reacted'),
         'username': fields.String(required=True, description='Username of the user who reacted'),
-        'reaction_type': fields.String(required=True, description='Type of raction')
+        'reaction_type': fields.String(required=True, description='Type of the reaction')
     }
 )
 
@@ -40,14 +39,13 @@ put_reaction_model = api.model(
     'Put reaction model', 
     {
         'reaction_type': fields.String(required=True, description='Type of the reaction'),
-        'post_id': fields.String(required=True, description='Unique ID of the reacted post'),
+        'post_id': fields.String(required=True, description='Unique ID of the reacted post')
     }
 )
 
 delete_reaction_model = api.model(
     'Delete reaction model', 
     {
-        'reaction_id': fields.String(required=True, description='Unique ID of the reaction'),
         'post_id': fields.String(required=True, description='Unique ID of the reacted post'),
     }
 )
@@ -76,6 +74,7 @@ class Reaction(Resource):
         '''
         Fetch reactions
         '''
+        pass
 
     @api.doc(params={
         'Authorization': {
@@ -149,7 +148,6 @@ class Reaction(Resource):
     @api.response(200, 'OK')
     @api.response(400, 'Bad Request')
     @api.response(401, 'Unauthorized')
-    @api.response(403, 'Forbidden')
     @api.response(500, 'Database Error')
     @jwt_required()
     def delete(self):
@@ -157,21 +155,14 @@ class Reaction(Resource):
         Delete reaction
         '''
         user_id = get_jwt_identity()
-        reaction_id = request.json.get('reaction_id')
         post_id = request.json.get('post_id')
         
         queries = db()
-        reaction = queries.get_reaction_by_id(reaction_id)
-        reaction_user_id = str(reaction.get(user_id))
         
-        if user_id != reaction_user_id:
-            log.info(f'Ownership of the reaction is in conflict: {user_id = }, {reaction_user_id = }')
-            api.abort(403, "Forbidden")
-        
-        response = queries.delete_reaction(reaction_id, post_id)
+        response = queries.delete_reaction(user_id, post_id)
         
         if not response:
-            log.error(f'Cannot delete reaction for data: {reaction_id = }, {user_id = }, {post_id = }')
+            log.error(f'Cannot delete reaction for data: {user_id = }, {post_id = }')
             api.abort(500, 'Database Error')
 
         return {}, 200
