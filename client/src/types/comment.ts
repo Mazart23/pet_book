@@ -4,4 +4,5 @@ export type Comment = {
   id: string;
   content: string;
   user: User;
+  timestamp: string;
 };
