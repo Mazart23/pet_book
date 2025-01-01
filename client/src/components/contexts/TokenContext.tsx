@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from 'js-cookie';
 
-const TokenContext = createContext();
+const TokenContext = createContext(null);
 
 const useToken = () => useContext(TokenContext);
 
