@@ -59,22 +59,23 @@ const Post = ({ post }: { post: Post }) => {
   }, [user.id]);
 
   useEffect(() => {
-    const updatedReactions = updateReactionsCount(post.reactions); 
-    const userReactionType = reactions.find((reaction) => reaction.user_id === jwtDecode(token).sub)?.reaction_type;
+    if(token){
+      const updatedReactions = updateReactionsCount(post.reactions); 
+      const userReactionType = reactions.find((reaction) => reaction.user_id === jwtDecode(token).sub)?.reaction_type;
 
-    if (userReactionType) {
-      const userReactionIndex = updatedReactions.findIndex((reaction) => reaction.type === userReactionType);
+      if (userReactionType) {
+        const userReactionIndex = updatedReactions.findIndex((reaction) => reaction.type === userReactionType);
 
-      if (userReactionIndex !== -1) {
-        updatedReactions[userReactionIndex].count -= 1;
-        setSelectedReactionNum(userReactionIndex);
+        if (userReactionIndex !== -1) {
+          updatedReactions[userReactionIndex].count -= 1;
+          setSelectedReactionNum(userReactionIndex);
+        }
+      } else {
+        setSelectedReactionNum(null);
       }
-    } else {
-      setSelectedReactionNum(null);
-    }
 
-    setReactionsCounts(updatedReactions);
-  }, [post.reactions, user.id]);
+      setReactionsCounts(updatedReactions);
+  }}, [post.reactions, user.id]);
 
   const changeReaction = (reactionNum) => {
     if (reactionNum === selectedReactionNum) {

@@ -61,6 +61,7 @@ user_model_id = api.model(
         'location': fields.String(description="User location (city)", example="Krakow"),
         'is_premium': fields.Boolean(description="Whether user has premium status", example=True),
         'is_private': fields.Boolean(description="Whether user's profile is private", example=False),
+        'phone': fields.String(description="Phone number of the user", example="123456789"),
     }
 )
 
