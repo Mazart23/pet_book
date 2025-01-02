@@ -14,7 +14,7 @@ import { getColorFromUsername } from "@/app/layout";
 const Header = () => {
   // Token state
   const { token, removeToken } = useToken();
-  const { user } = useUser();
+  const { currentUser } = useUser();
 
   // Navbar toggle
   const [navbarOpen, setNavbarOpen] = useState(false);
@@ -181,19 +181,19 @@ const Header = () => {
                     >
                       Logout
                     </Link>
-                    <div className={`h-12 w-12 relative ${user?.profile_picture_url !== undefined ? "animate__animated animate__fadeInTop" : ""}`}>
-                    {user?.profile_picture_url !== undefined && 
-                      <Link href={`/profile/${user.username}`}>
-                          { user.profile_picture_url === "" ? (
+                    <div className={`h-12 w-12 relative ${currentUser?.profile_picture_url !== undefined ? "animate__animated animate__fadeInTop" : ""}`}>
+                    {currentUser?.profile_picture_url !== undefined && 
+                      <Link href={`/profile/${currentUser.username}`}>
+                          { currentUser.profile_picture_url === "" ? (
                             <SiDatadog 
                               className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-md hover:shadow-lg shadow-indigo-900" 
                               style={{
-                                color: getColorFromUsername(user.username),
+                                color: getColorFromUsername(currentUser.username),
                               }}
                             />
                           ):(
                             <Image
-                              src={user.profile_picture_url}
+                              src={currentUser.profile_picture_url}
                               fill
                               alt="User profile picture"
                               className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-md hover:shadow-lg shadow-indigo-900"

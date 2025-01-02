@@ -39,10 +39,8 @@ const Post = ({ post }: { post: Post }) => {
   const [selectedReactionNum, setSelectedReactionNum] = useState<number | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null | undefined>(undefined);
   const [reactionsCounts, setReactionsCounts] = useState(reactionsArray);
-  const {token} = useToken();
-  const {currentUser} = useUser();
-
- 
+  const { token } = useToken();
+  const { currentUser } = useUser();
 
   useEffect(() => {
     fetchProfilePicture(user.id)
@@ -59,22 +57,24 @@ const Post = ({ post }: { post: Post }) => {
   }, [user.id]);
 
   useEffect(() => {
-    const updatedReactions = updateReactionsCount(post.reactions); 
-    const userReactionType = reactions.find((reaction) => reaction.user_id === jwtDecode(token).sub)?.reaction_type;
-
-    if (userReactionType) {
-      const userReactionIndex = updatedReactions.findIndex((reaction) => reaction.type === userReactionType);
-
-      if (userReactionIndex !== -1) {
-        updatedReactions[userReactionIndex].count -= 1;
-        setSelectedReactionNum(userReactionIndex);
+    if (currentUser?.id) {
+      const updatedReactions = updateReactionsCount(post.reactions); 
+      const userReactionType = reactions.find((reaction) => reaction.user_id === currentUser.id)?.reaction_type;
+  
+      if (userReactionType) {
+        const userReactionIndex = updatedReactions.findIndex((reaction) => reaction.type === userReactionType);
+  
+        if (userReactionIndex !== -1) {
+          updatedReactions[userReactionIndex].count -= 1;
+          setSelectedReactionNum(userReactionIndex);
+        }
+      } else {
+        setSelectedReactionNum(null);
       }
-    } else {
-      setSelectedReactionNum(null);
+  
+      setReactionsCounts(updatedReactions);
     }
-
-    setReactionsCounts(updatedReactions);
-  }, [post.reactions, user.id]);
+  }, [post.reactions, user.id, currentUser]);
 
   const changeReaction = (reactionNum) => {
     if (reactionNum === selectedReactionNum) {

@@ -8,23 +8,23 @@ const UserContext = createContext();
 const useUser = () => useContext(UserContext);
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const { token } = useToken();
   const { socket } = useWebsocket();
 
   useEffect(() => {
     if (token && socket) {
       fetchUserSelfData(token).then((data) => {
-        setUser(data);
+        setCurrentUser(data);
       })
     } else {
-      setUser(null);
+      setCurrentUser(null);
     }
   }, [token, socket]);
 
   const contextValue = {
-    user,
-    setUser
+    currentUser,
+    setCurrentUser
   };
 
   return (
