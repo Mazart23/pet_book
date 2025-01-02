@@ -120,6 +120,7 @@ class Reaction(Resource):
         
         json_data = {
             'user_owner_id': str(user_owner_id),
+            'notification_id': reaction_id,
             'data': {
                 'post_id': post_id,
                 'user_id': user_id,

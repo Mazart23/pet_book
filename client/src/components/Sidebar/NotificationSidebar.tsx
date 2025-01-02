@@ -79,9 +79,13 @@ const NotificationSidebar = () => {
       };
 
       socket.on("notification_scan", handler);
+      socket.on("notification_comment", handler);
+      socket.on("notification_reaction", handler);
 
       return () => {
         socket.off("notification_scan", handler);
+        socket.off("notification_comment", handler);
+        socket.off("notification_reaction", handler);
       };
     }
   }, [socket]);

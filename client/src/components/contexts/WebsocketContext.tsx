@@ -29,14 +29,6 @@ export const WebsocketProvider = ({ children }) => {
         console.log("Connected to WebSocket");
       });
 
-      websocket.on("notification_reaction", (data) => {
-        console.log("Reaction", data);
-      });
-
-      websocket.on("notification_comment", (data) => {
-        console.log("Comment", data);
-      });
-
       return () => {
         websocket.disconnect();
         console.log("Disconnected with WebSocket");
