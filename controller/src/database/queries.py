@@ -42,7 +42,9 @@ class Queries(MongoDBConnect):
                 'location': True,
                 'is_premium': True,
                 'is_private': True,
-                'phone': True
+                'phone': True,
+                'posts': True,
+                'scans': True
             }
             return self.find_one('users', filter, projection)
         except Exception as e:
@@ -464,7 +466,7 @@ class Queries(MongoDBConnect):
 
             for post in paginated_posts:
                 post['id'] = str(post.pop('_id'))
-                post.pop('_user_id')
+                post.pop('user_id')
                 post['comments'] = []
                 post['reactions'] = []
                 post['images'] = str(post.pop('images_urls'))

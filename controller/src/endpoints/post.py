@@ -76,7 +76,7 @@ class Post(Resource):
 
             query = {}
             if user_id:
-                query = {'_user_id': ObjectId(user_id)}
+                query = {'user_id': ObjectId(user_id)}
             
             user_info = queries.get_user_by_id(user_id)
 
