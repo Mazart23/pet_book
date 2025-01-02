@@ -45,7 +45,6 @@ reaction_input_model = api.model(
     'Reaction Input Model', 
     {
         'user_owner_id': fields.String(required=True, description='Unique ID of the user'),
-        'notification_id': fields.String(required=True, description='Unique ID of the reaction'),
         'data': fields.Nested(reaction_model, required=True, description='Reaction information'),
         'timestamp': fields.String(required=True, description='Time of reaction')
     }

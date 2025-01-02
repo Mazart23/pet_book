@@ -119,16 +119,16 @@ class Reaction(Resource):
             api.abort(500, 'Database Error')
         
         json_data = {
-            'user_owner_id': user_owner_id,
+            'user_owner_id': str(user_owner_id),
             'data': {
-                'reaction_id': reaction_id,
                 'post_id': post_id,
                 'user_id': user_id,
                 'username': username,
                 'reaction_type': reaction_type,
+            },
             'timestamp': str(timestamp)
-            }
         }
+        log.info(f"reaction json data: {json_data}")
         try:
             send_request('POST', Services.NOTIFIER, '/emit/reaction', json_data=json_data)
         except Exception as e:
