@@ -11,6 +11,7 @@ import { getColorFromUsername } from "@/app/layout";
 import { SiDatadog } from "react-icons/si";
 import useToken from "../contexts/TokenContext";
 import useUser from "../contexts/UserContext";
+import jwtDecode from "jwt-decode";
 
 const reactionsArray = [
   {"type": "good", "text": "Good", "count": 0}, 
@@ -41,6 +42,8 @@ const Post = ({ post }: { post: Post }) => {
   const {token} = useToken();
   const {currentUser} = useUser();
 
+ 
+
   useEffect(() => {
     fetchProfilePicture(user.id)
       .then((profileUrl) => {
@@ -56,8 +59,8 @@ const Post = ({ post }: { post: Post }) => {
   }, [user.id]);
 
   useEffect(() => {
-    const updatedReactions = updateReactionsCount(post.reactions);
-    const userReactionType = reactions.find((reaction) => reaction.user_id === currentUser.id)?.reaction_type;
+    const updatedReactions = updateReactionsCount(post.reactions); 
+    const userReactionType = reactions.find((reaction) => reaction.user_id === jwtDecode(token).sub)?.reaction_type;
 
     if (userReactionType) {
       const userReactionIndex = updatedReactions.findIndex((reaction) => reaction.type === userReactionType);

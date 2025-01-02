@@ -48,6 +48,22 @@ user_model = api.model(
     }
 )
 
+user_model_id = api.model(
+    'User model', 
+    {
+        '_id': fields.String(description="ID of the user", example="1234"),
+        'username': fields.String(description="Username of the user", example="Julia"),
+        'bio': fields.String(description="Bio of the user", example="bio"),
+        'email': fields.String(description="Email address of the user", example="kasia@gmail.com"),
+        'profile_picture_url': fields.String(description="Profile picture URL", example="https://i.imgur.com/9P3c7an.jpeg"),
+        'scans': fields.List(fields.String, description="List of user scans IDs", example=["6741f6491a7d7e60b197e7b7"]),
+        'posts': fields.List(fields.String, description="List of user posts IDs", example=["67524226995227baafe49eed"]),
+        'location': fields.String(description="User location (city)", example="Krakow"),
+        'is_premium': fields.Boolean(description="Whether user has premium status", example=True),
+        'is_private': fields.Boolean(description="Whether user's profile is private", example=False),
+    }
+)
+
 login_input_model = api.model(
     'Login input model',
     {
@@ -83,7 +99,7 @@ user_profile_picture_model = api.model(
 @api.route('/')
 class User(Resource):
     @api.doc(params={'username': {'description': 'Unique username', 'example': 'Julia', 'required': True}})
-    @api.marshal_with(user_model, code=200)
+    @api.marshal_with(user_model_id, code=200)
     @api.response(200, 'OK')
     @api.response(400, 'Bad Request')
     @api.response(404, 'Not Found')

@@ -100,7 +100,7 @@ class Reaction(Resource):
         timestamp = datetime.now()
         
         queries = db()
-        user_owner_id = queries.get_post_by_id(post_id).get('user_id')
+        user_owner_id = queries.get_post_by_id(post_id).get('_user_id')
         
         if not user_owner_id:
             log.info('User owner not found')

@@ -204,3 +204,33 @@ export async function putReaction(token, reaction_type, post_id) {
       throw error;
     });
 }
+
+export async function fetchPosts({ userId = null, page = 1, limit = 10 } = {}) {
+  await servicesWait();
+
+  const params = {
+    page,
+    limit,
+    ...(userId && { user_id: userId }),
+  };
+
+  return apiClient
+    .get(`${services.controller.url}/post`, { params })
+    .then((response) => response.data.posts)
+    .catch((error) => {
+      throw error;
+    });
+}
+
+
+export async function fetchUserByUsername(username) {
+  await servicesWait();
+  return apiClient
+    .get(`${services.controller.url}/user`, {
+      params: { username }, 
+    })
+    .then((response) => response.data)
+    .catch((error) => {
+      throw error;
+    });
+}

@@ -33,6 +33,7 @@ class Queries(MongoDBConnect):
         try:
             filter = {'username': username}
             projection = {
+                '_id': True,
                 'username': True,
                 'bio': True,
                 'email': True,
@@ -443,3 +444,68 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f"Error during deleting reaction for {user_id = }, {post_id = }, Error = {e}")
             return False
+        
+    def fetch_posts(self, query: dict, skip: int = 0, limit: int = 10) -> list:
+        """
+        Fetch posts from the database with optional filters, pagination.
+        :param query: Dictionary containing query filters
+        :param skip: Number of documents to skip (for pagination)
+        :param limit: Maximum number of documents to return
+        :return: List of posts
+        """
+        try:
+
+            posts = list(self.find('posts', query))
+
+            posts.sort(key=lambda x: x['timestamp'], reverse=True)
+            paginated_posts = posts[skip:skip + limit]
+
+            for post in paginated_posts:
+                post['id'] = str(post.pop('_id'))
+                post.pop('_user_id')
+                post['comments'] = []
+                post['reactions'] = []
+                post['images'] = str(post.pop('images_urls'))
+                post['content'] = str(post.pop('description'))
+
+
+            return paginated_posts
+
+        except Exception as e:
+            log.error(f"Error fetching posts: {e}")
+            return []
+        
+    def get_reactions(self, post_id: str) -> list:
+        """
+        Fetch reactions for a specific post.
+        :param post_id: The unique ID of the post
+        :return: List of reactions for the post
+        """
+        try:
+            reactions = list(self.find('reactions', {'post_id': ObjectId(post_id)}))
+            for reaction in reactions:
+                reaction['_id'] = str(reaction['_id'])
+                reaction['user_id'] = str(reaction['user_id'])
+                reaction['post_id'] = str(reaction['post_id'])
+            return reactions
+        except Exception as e:
+            log.error(f"Error fetching reactions for post {post_id}: {e}")
+            return []
+
+    def get_comments(self, post_id: str) -> list:
+        """
+        Fetch comments for a specific post.
+        :param post_id: The unique ID of the post
+        :return: List of comments for the post
+        """
+        try:
+            comments = list(self.find('comments', {'post_id': ObjectId(post_id)}))
+            for comment in comments:
+                comment['_id'] = str(comment['_id'])
+                comment['user_id'] = str(comment['user_id'])
+                comment['post_id'] = str(comment['post_id'])
+                
+            return comments
+        except Exception as e:
+            log.error(f"Error fetching comments for post {post_id}: {e}")
+            return []
