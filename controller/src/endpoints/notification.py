@@ -6,8 +6,6 @@ from flask_restx import Resource, fields, Namespace
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from ..database.queries import Queries as db
-from ..utils.request import send_request
-from ..utils.apps import Services
 from ..utils.fields import DynamicModelField
 
 

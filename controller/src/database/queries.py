@@ -22,7 +22,8 @@ class Queries(MongoDBConnect):
                 'posts': True,
                 'scans': True,
                 'is_premium': True,
-                'is_private': True
+                'is_private': True,
+                'phone': True
             }
             return self.find_one('users', filter, projection)
         except Exception as e:
