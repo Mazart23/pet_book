@@ -86,7 +86,6 @@ class Scan(Resource):
 
         if socket.is_connected(user_id):
             socket.emit('notification_scan', json_data, room=user_id)
-            print('emit')
 
         return {}, 200
 

@@ -1,6 +1,7 @@
 "use client";
 
 import {useState, useEffect} from "react";
+import ImageSlider from "../ImageSlider/ImageSlider";
 import Image from "next/image";
 import Link from "next/link";
 import Lottie from "react-lottie";
@@ -89,8 +90,7 @@ const Post = ({ post }: { post: Post }) => {
 
   return (
     <div className="group relative overflow-hidden rounded-sm bg-white shadow-one duration-300 hover:shadow-two dark:bg-dark dark:hover:shadow-gray-dark">
-      <Link
-        href="/blog-details"
+      <div
         className="relative block aspect-[37/22] w-full"
       >
         {/* Green Tag */}
@@ -99,8 +99,8 @@ const Post = ({ post }: { post: Post }) => {
             {location}
           </span>
         }
-        <Image src={images[0]} alt="image" fill />
-      </Link>
+        <ImageSlider images={images}/>
+      </div>
       <div className="p-6 sm:p-8 md:px-6 md:py-8 lg:p-8 xl:px-5 xl:py-8 2xl:p-8">
         <p className="mb-6 border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
           {content}
