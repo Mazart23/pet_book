@@ -17,6 +17,8 @@ const Profile = () => {
   const [userPosts, setUserPosts] = useState([]);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [lastFetchedTimestamp, setLastFetchedTimestamp] = useState<string | null>(null);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
   const { token } = useToken();
 
   const loaderOptions = {
@@ -27,6 +29,24 @@ const Profile = () => {
       preserveAspectRatio: "xMidYMid slice",
     },
   };
+
+  const fetchMorePosts = () => {
+    if (!userData?.id || !hasMorePosts || loadingPosts) return;
+
+    setLoadingPosts(true);
+    fetchPosts(userData.id, lastFetchedTimestamp) // Pass last fetched timestamp for pagination
+      .then((posts) => {
+        if (posts.length > 0) {
+          setUserPosts((prevPosts) => [...prevPosts, ...posts]); // Append new posts
+          setLastFetchedTimestamp(posts[posts.length - 1].timestamp); // Update timestamp
+        } else {
+          setHasMorePosts(false); // No more posts available
+        }
+      })
+      .catch((err) => console.error("Failed to fetch posts:", err))
+      .finally(() => setLoadingPosts(false));
+  };
+
 
   // Fetch user data
   useEffect(() => {
@@ -50,14 +70,18 @@ const Profile = () => {
   }, [userData]);
 
   // Fetch user posts
+  // useEffect(() => {
+  //   if (userData?.id) {
+  //     setLoadingPosts(true);
+  //     fetchPosts(userData.id)
+  //       .then((posts) => setUserPosts(posts))
+  //       .catch((err) => console.error("Failed to fetch posts:", err))
+  //       .finally(() => setLoadingPosts(false));
+  //   }
+  // }, [userData]);
+
   useEffect(() => {
-    if (userData?.id) {
-      setLoadingPosts(true);
-      fetchPosts(userData.id)
-        .then((posts) => setUserPosts(posts))
-        .catch((err) => console.error("Failed to fetch posts:", err))
-        .finally(() => setLoadingPosts(false));
-    }
+    fetchMorePosts(); // Initial post fetch
   }, [userData]);
 
   // Handle profile picture upload
@@ -164,11 +188,7 @@ const Profile = () => {
         <div className="w-full mt-8">
           <SectionTitle title="Posts" paragraph="See all posts." />
           {token ? (
-            loadingPosts ? (
-              <div className="flex justify-center">
-                <Lottie options={loaderOptions} height={128} width={128} />
-              </div>
-            ) : userPosts.length > 0 ? (
+            <div>
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2">
                 {userPosts.map((post) => (
                   <div key={post.id} className="w-full">
@@ -176,11 +196,27 @@ const Profile = () => {
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="text-center text-gray-600 dark:text-gray-400 mt-8">
-                <p>No posts found.</p>
-              </div>
-            )
+              {loadingPosts && (
+                <div className="flex justify-center">
+                  <Lottie options={loaderOptions} height={128} width={128} />
+                </div>
+              )}
+              {!loadingPosts && hasMorePosts && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    className="bg-blue-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-500 transition duration-300"
+                    onClick={fetchMorePosts}
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
+              {!loadingPosts && !hasMorePosts && (
+                <div className="text-center text-gray-600 dark:text-gray-400 mt-8">
+                  <p>No more posts to load.</p>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="text-center text-gray-600 dark:text-gray-400 mt-8">
               <p>Please sign in to see posts.</p>
