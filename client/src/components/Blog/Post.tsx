@@ -35,7 +35,7 @@ const updateReactionsCount = (reactions) => {
 };
 
 const Post = ({ post }: { post: Post }) => {
-  const { id, content, images, user, location, timestamp, comments, reactions } = post;
+  const { id, content, images, user, location, timestamp, reactions } = post;
   const [selectedReactionNum, setSelectedReactionNum] = useState<number | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null | undefined>(undefined);
   const [reactionsCounts, setReactionsCounts] = useState(reactionsArray);
