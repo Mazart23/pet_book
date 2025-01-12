@@ -455,7 +455,7 @@ class Queries(MongoDBConnect):
     def fetch_posts(self, query: dict, limit: int = 10) -> list:
         """
         Fetch posts from the database with optional filters and pagination using aggregation pipeline.
-        This version includes related comments and reactions using $lookup.
+        This version includes related reactions and user details using $lookup.
         :param query: Dictionary containing query filters
         :param limit: Maximum number of documents to return
         :return: List of posts
@@ -471,16 +471,6 @@ class Queries(MongoDBConnect):
 
                 # Limit the number of posts
                 {"$limit": limit},
-
-                # Lookup comments for each post
-                {
-                    "$lookup": {
-                        "from": "comments",              # Collection to join
-                        "localField": "_id",             # Field from the 'posts' collection
-                        "foreignField": "post_id",       # Field from the 'comments' collection
-                        "as": "comments",                # Output array field
-                    }
-                },
 
                 # Lookup reactions for each post
                 {
@@ -518,18 +508,6 @@ class Queries(MongoDBConnect):
                         },
                         "location": 1,
                         "timestamp": 1,
-                        "comments": {
-                            "$map": {
-                                "input": "$comments",
-                                "as": "comment",
-                                "in": {
-                                    "id": {"$toString": "$$comment._id"},
-                                    "user_id": {"$toString": "$$comment.user_id"},
-                                    "content": "$$comment.content",
-                                    "timestamp": "$$comment.timestamp",
-                                },
-                            }
-                        },
                         "reactions": {
                             "$map": {
                                 "input": "$reactions",
@@ -555,7 +533,6 @@ class Queries(MongoDBConnect):
             return []
 
 
-
         
     def get_reactions(self, post_id: str) -> list:
         """
@@ -574,20 +551,59 @@ class Queries(MongoDBConnect):
             log.error(f"Error fetching reactions for post {post_id}: {e}")
             return []
 
-    def get_comments(self, post_id: str) -> list:
+    def fetch_comments(self, query: dict, limit: int = 10) -> list:
         """
-        Fetch comments for a specific post.
-        :param post_id: The unique ID of the post
-        :return: List of comments for the post
+        Fetch comments for a specific post with user details included.
+        :param query: Dictionary containing query filters
+        :param limit: Maximum number of documents to return
+        :return: List of comments
         """
         try:
-            comments = list(self.find('comments', {'post_id': ObjectId(post_id)}))
-            for comment in comments:
-                comment['_id'] = str(comment['_id'])
-                comment['user_id'] = str(comment['user_id'])
-                comment['post_id'] = str(comment['post_id'])
-                
-            return comments
+            # Build the aggregation pipeline
+            pipeline = [
+                # Match comments based on the query
+                {"$match": query},
+
+                # Sort by timestamp in descending order
+                {"$sort": {"timestamp": -1}},
+
+                # Limit the number of comments
+                {"$limit": limit},
+
+                # Lookup user details for each comment's user
+                {
+                    "$lookup": {
+                        "from": "users",                # Collection to join
+                        "localField": "user_id",        # Field from the 'comments' collection
+                        "foreignField": "_id",          # Field from the 'users' collection
+                        "as": "user",                   # Output array field
+                    }
+                },
+
+                # Unwind the user array to convert it to a single object
+                {"$unwind": {"path": "$user", "preserveNullAndEmptyArrays": True}},
+
+                # Project fields to format the output structure
+                {
+                    "$project": {
+                        "id": {"$toString": "$_id"},     # Convert ObjectId to string
+                        "content": 1,
+                        "timestamp": 1,
+                        "user": {
+                            "id": {"$toString": "$user._id"},
+                            "username": "$user.username",
+                            "image": "$user.profile_picture_url",
+                        },
+                    }
+                },
+            ]
+
+            # Execute the aggregation pipeline
+            cursor = self.find_aggregate('comments', pipeline)
+
+            return list(cursor)
+
         except Exception as e:
-            log.error(f"Error fetching comments for post {post_id}: {e}")
+            log.error(f"Error fetching comments: {e}")
             return []
+

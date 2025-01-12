@@ -223,6 +223,24 @@ export async function fetchPosts(user_id = null, last_timestamp = null, limit = 
   }
 }
 
+export async function fetchComments(post_id = null, last_timestamp = null, limit = 10) {
+  await servicesWait();
+
+  const params = {
+    limit,
+    ...(post_id && { post_id }),
+    ...(last_timestamp && { last_timestamp }),
+  };
+
+  try {
+    const response = await apiClient.get(`${services.controller.url}/post/comments`, { params });
+    return response.data.posts;
+  } catch (error) {
+    console.error("Error fetching posts:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
 
 
 export async function fetchUserByUsername(username) {
