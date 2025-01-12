@@ -22,7 +22,8 @@ class Queries(MongoDBConnect):
                 'posts': True,
                 'scans': True,
                 'is_premium': True,
-                'is_private': True
+                'is_private': True,
+                'phone': True
             }
             return self.find_one('users', filter, projection)
         except Exception as e:
@@ -33,15 +34,22 @@ class Queries(MongoDBConnect):
         try:
             filter = {'username': username}
             projection = {
+                '_id': True,
                 'username': True,
                 'bio': True,
                 'email': True,
                 'profile_picture_url': True,
                 'location': True,
                 'is_premium': True,
-                'is_private': True
+                'is_private': True,
+                'phone': True,
+                'posts': True,
+                'scans': True
             }
-            return self.find_one('users', filter, projection)
+            user = self.find_one('users', filter, projection)
+            if user:
+                user['id'] = user.pop('_id')  # Rename _id to id
+            return user
         except Exception as e:
             log.error(f'Error fetching user: {e}')
             return {}
@@ -443,3 +451,159 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f"Error during deleting reaction for {user_id = }, {post_id = }, Error = {e}")
             return False
+        
+    def fetch_posts(self, query: dict, limit: int = 10) -> list:
+        """
+        Fetch posts from the database with optional filters and pagination using aggregation pipeline.
+        This version includes related reactions and user details using $lookup.
+        :param query: Dictionary containing query filters
+        :param limit: Maximum number of documents to return
+        :return: List of posts
+        """
+        try:
+            # Build the aggregation pipeline
+            pipeline = [
+                # Match posts based on the query
+                {"$match": query},
+
+                # Sort by timestamp in descending order
+                {"$sort": {"timestamp": -1}},
+
+                # Limit the number of posts
+                {"$limit": limit},
+
+                # Lookup reactions for each post
+                {
+                    "$lookup": {
+                        "from": "reactions",             # Collection to join
+                        "localField": "_id",             # Field from the 'posts' collection
+                        "foreignField": "post_id",       # Field from the 'reactions' collection
+                        "as": "reactions",               # Output array field
+                    }
+                },
+
+                # Lookup user details for the post author
+                {
+                    "$lookup": {
+                        "from": "users",                 # Collection to join
+                        "localField": "user_id",         # Field from the 'posts' collection
+                        "foreignField": "_id",           # Field from the 'users' collection
+                        "as": "user",                    # Output array field
+                    }
+                },
+
+                # Unwind the user array to convert it to a single object
+                {"$unwind": {"path": "$user", "preserveNullAndEmptyArrays": True}},
+
+                # Project fields to format the output structure
+                {
+                    "$project": {
+                        "id": {"$toString": "$_id"},     # Convert ObjectId to string
+                        "content": "$description",      # Rename field
+                        "images": "$images_urls",       # Rename field
+                        "user": {
+                            "id": {"$toString": "$user._id"},
+                            "username": "$user.username",
+                            "image": "$user.profile_picture_url",
+                        },
+                        "location": 1,
+                        "timestamp": 1,
+                        "reactions": {
+                            "$map": {
+                                "input": "$reactions",
+                                "as": "reaction",
+                                "in": {
+                                    "id": {"$toString": "$$reaction._id"},
+                                    "user_id": {"$toString": "$$reaction.user_id"},
+                                    "reaction_type": "$$reaction.reaction_type",
+                                },
+                            }
+                        },
+                    }
+                },
+            ]
+
+            # Execute the aggregation pipeline
+            cursor = self.find_aggregate('posts', pipeline)
+
+            return list(cursor)
+
+        except Exception as e:
+            log.error(f"Error fetching posts with $lookup: {e}")
+            return []
+
+
+        
+    def get_reactions(self, post_id: str) -> list:
+        """
+        Fetch reactions for a specific post.
+        :param post_id: The unique ID of the post
+        :return: List of reactions for the post
+        """
+        try:
+            reactions = list(self.find('reactions', {'post_id': ObjectId(post_id)}))
+            for reaction in reactions:
+                reaction['_id'] = str(reaction['_id'])
+                reaction['user_id'] = str(reaction['user_id'])
+                reaction['post_id'] = str(reaction['post_id'])
+            return reactions
+        except Exception as e:
+            log.error(f"Error fetching reactions for post {post_id}: {e}")
+            return []
+
+    def fetch_comments(self, query: dict, limit: int = 10) -> list:
+        """
+        Fetch comments for a specific post with user details included.
+        :param query: Dictionary containing query filters
+        :param limit: Maximum number of documents to return
+        :return: List of comments
+        """
+        try:
+            # Build the aggregation pipeline
+            pipeline = [
+                # Match comments based on the query
+                {"$match": query},
+
+                # Sort by timestamp in descending order
+                {"$sort": {"timestamp": -1}},
+
+                # Limit the number of comments
+                {"$limit": limit},
+
+                # Lookup user details for each comment's user
+                {
+                    "$lookup": {
+                        "from": "users",                # Collection to join
+                        "localField": "user_id",        # Field from the 'comments' collection
+                        "foreignField": "_id",          # Field from the 'users' collection
+                        "as": "user",                   # Output array field
+                    }
+                },
+
+                # Unwind the user array to convert it to a single object
+                {"$unwind": {"path": "$user", "preserveNullAndEmptyArrays": True}},
+
+                # Project fields to format the output structure
+                {
+                    "$project": {
+                        "id": {"$toString": "$_id"},     # Convert ObjectId to string
+                        "content": 1,
+                        "timestamp": 1,
+                        "user": {
+                            "id": {"$toString": "$user._id"},
+                            "username": "$user.username",
+                            "image": "$user.profile_picture_url",
+                        },
+                    }
+                },
+            ]
+
+            # Execute the aggregation pipeline
+            cursor = self.find_aggregate('comments', pipeline)
+
+            return list(cursor)
+
+        except Exception as e:
+            log.error(f"Error fetching comments: {e}")
+            return []
+

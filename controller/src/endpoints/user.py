@@ -36,6 +36,7 @@ status_model = api.model(
 user_model = api.model(
     'User model', 
     {
+        'id': fields.String(description="ID of the user", example="1234"),
         'username': fields.String(description="Username of the user", example="Julia"),
         'bio': fields.String(description="Bio of the user", example="bio"),
         'email': fields.String(description="Email address of the user", example="kasia@gmail.com"),
@@ -45,6 +46,7 @@ user_model = api.model(
         'location': fields.String(description="User location (city)", example="Krakow"),
         'is_premium': fields.Boolean(description="Whether user has premium status", example=True),
         'is_private': fields.Boolean(description="Whether user's profile is private", example=False),
+        'phone': fields.String(description="Phone number of the user", example="123456789"),
     }
 )
 
@@ -98,6 +100,7 @@ class User(Resource):
         queries = db()
 
         user_data = queries.get_user_by_username(username)
+        log.info(f"User data fetched: {user_data}")
 
         if not user_data:
             log.error(f'Error fetching data for {username}')

@@ -123,8 +123,8 @@ class Comment(Resource):
         
         json_data = {
             'user_owner_id': user_owner_id,
+            'notification_id': comment_id,
             'data': {
-                'comment_id': comment_id,
                 'post_id': post_id,
                 'user_id': user_id,
                 'username': username,

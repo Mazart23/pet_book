@@ -11,6 +11,7 @@ import { getColorFromUsername } from "@/app/layout";
 import { SiDatadog } from "react-icons/si";
 import useToken from "../contexts/TokenContext";
 import useUser from "../contexts/UserContext";
+import jwtDecode from "jwt-decode";
 
 const reactionsArray = [
   {"type": "good", "text": "Good", "count": 0}, 
@@ -34,12 +35,14 @@ const updateReactionsCount = (reactions) => {
 };
 
 const Post = ({ post }: { post: Post }) => {
-  const { id, content, images, user, location, timestamp, comments, reactions } = post;
+  const { id, content, images, user, location, timestamp, reactions } = post;
   const [selectedReactionNum, setSelectedReactionNum] = useState<number | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null | undefined>(undefined);
   const [reactionsCounts, setReactionsCounts] = useState(reactionsArray);
   const {token} = useToken();
   const {currentUser} = useUser();
+
+ 
 
   useEffect(() => {
     fetchProfilePicture(user.id)
@@ -56,22 +59,23 @@ const Post = ({ post }: { post: Post }) => {
   }, [user.id]);
 
   useEffect(() => {
-    const updatedReactions = updateReactionsCount(post.reactions);
-    const userReactionType = reactions.find((reaction) => reaction.user_id === currentUser.id)?.reaction_type;
+    if(token){
+      const updatedReactions = updateReactionsCount(post.reactions); 
+      const userReactionType = reactions.find((reaction) => reaction.user_id === jwtDecode(token).sub)?.reaction_type;
 
-    if (userReactionType) {
-      const userReactionIndex = updatedReactions.findIndex((reaction) => reaction.type === userReactionType);
+      if (userReactionType) {
+        const userReactionIndex = updatedReactions.findIndex((reaction) => reaction.type === userReactionType);
 
-      if (userReactionIndex !== -1) {
-        updatedReactions[userReactionIndex].count -= 1;
-        setSelectedReactionNum(userReactionIndex);
+        if (userReactionIndex !== -1) {
+          updatedReactions[userReactionIndex].count -= 1;
+          setSelectedReactionNum(userReactionIndex);
+        }
+      } else {
+        setSelectedReactionNum(null);
       }
-    } else {
-      setSelectedReactionNum(null);
-    }
 
-    setReactionsCounts(updatedReactions);
-  }, [post.reactions, user.id]);
+      setReactionsCounts(updatedReactions);
+  }}, [post.reactions, user.id]);
 
   const changeReaction = (reactionNum) => {
     if (reactionNum === selectedReactionNum) {
