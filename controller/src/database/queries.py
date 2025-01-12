@@ -452,35 +452,110 @@ class Queries(MongoDBConnect):
             log.error(f"Error during deleting reaction for {user_id = }, {post_id = }, Error = {e}")
             return False
         
-    def fetch_posts(self, query: dict, skip: int = 0, limit: int = 10) -> list:
+    def fetch_posts(self, query: dict, limit: int = 10) -> list:
         """
-        Fetch posts from the database with optional filters, pagination.
+        Fetch posts from the database with optional filters and pagination using aggregation pipeline.
+        This version includes related comments and reactions using $lookup.
         :param query: Dictionary containing query filters
-        :param skip: Number of documents to skip (for pagination)
         :param limit: Maximum number of documents to return
         :return: List of posts
         """
         try:
+            # Build the aggregation pipeline
+            pipeline = [
+                # Match posts based on the query
+                {"$match": query},
 
-            posts = list(self.find('posts', query) or [])
+                # Sort by timestamp in descending order
+                {"$sort": {"timestamp": -1}},
 
-            posts.sort(key=lambda x: x['timestamp'], reverse=True)
-            paginated_posts = posts[skip:skip + limit]
+                # Limit the number of posts
+                {"$limit": limit},
 
-            for post in paginated_posts:
-                post['id'] = str(post.pop('_id'))
-                post.pop('user_id')
-                post['comments'] = []
-                post['reactions'] = []
-                post['images'] = str(post.pop('images_urls'))
-                post['content'] = str(post.pop('description'))
+                # Lookup comments for each post
+                {
+                    "$lookup": {
+                        "from": "comments",              # Collection to join
+                        "localField": "_id",             # Field from the 'posts' collection
+                        "foreignField": "post_id",       # Field from the 'comments' collection
+                        "as": "comments",                # Output array field
+                    }
+                },
 
+                # Lookup reactions for each post
+                {
+                    "$lookup": {
+                        "from": "reactions",             # Collection to join
+                        "localField": "_id",             # Field from the 'posts' collection
+                        "foreignField": "post_id",       # Field from the 'reactions' collection
+                        "as": "reactions",               # Output array field
+                    }
+                },
 
-            return paginated_posts
+                # Lookup user details for the post author
+                {
+                    "$lookup": {
+                        "from": "users",                 # Collection to join
+                        "localField": "user_id",         # Field from the 'posts' collection
+                        "foreignField": "_id",           # Field from the 'users' collection
+                        "as": "user",                    # Output array field
+                    }
+                },
+
+                # Unwind the user array to convert it to a single object
+                {"$unwind": {"path": "$user", "preserveNullAndEmptyArrays": True}},
+
+                # Project fields to format the output structure
+                {
+                    "$project": {
+                        "id": {"$toString": "$_id"},     # Convert ObjectId to string
+                        "content": "$description",      # Rename field
+                        "images": "$images_urls",       # Rename field
+                        "user": {
+                            "id": {"$toString": "$user._id"},
+                            "username": "$user.username",
+                            "image": "$user.profile_picture_url",
+                        },
+                        "location": 1,
+                        "timestamp": 1,
+                        "comments": {
+                            "$map": {
+                                "input": "$comments",
+                                "as": "comment",
+                                "in": {
+                                    "id": {"$toString": "$$comment._id"},
+                                    "user_id": {"$toString": "$$comment.user_id"},
+                                    "content": "$$comment.content",
+                                    "timestamp": "$$comment.timestamp",
+                                },
+                            }
+                        },
+                        "reactions": {
+                            "$map": {
+                                "input": "$reactions",
+                                "as": "reaction",
+                                "in": {
+                                    "id": {"$toString": "$$reaction._id"},
+                                    "user_id": {"$toString": "$$reaction.user_id"},
+                                    "reaction_type": "$$reaction.reaction_type",
+                                },
+                            }
+                        },
+                    }
+                },
+            ]
+
+            # Execute the aggregation pipeline
+            cursor = self.find_aggregate('posts', pipeline)
+
+            return list(cursor)
 
         except Exception as e:
-            log.error(f"Error fetching posts: {e}")
+            log.error(f"Error fetching posts with $lookup: {e}")
             return []
+
+
+
         
     def get_reactions(self, post_id: str) -> list:
         """

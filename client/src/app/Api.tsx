@@ -205,22 +205,24 @@ export async function putReaction(token, reaction_type, post_id) {
     });
 }
 
-export async function fetchPosts(user_id = null, page = 1, limit = 10) {
+export async function fetchPosts(user_id = null, last_timestamp = null, limit = 10) {
   await servicesWait();
 
   const params = {
-    page,
     limit,
-    ...(user_id && { user_id: user_id }),
+    ...(user_id && { user_id }),
+    ...(last_timestamp && { last_timestamp }),
   };
 
-  return apiClient
-    .get(`${services.controller.url}/post`, { params })
-    .then((response) => response.data.posts)
-    .catch((error) => {
-      throw error;
-    });
+  try {
+    const response = await apiClient.get(`${services.controller.url}/post`, { params });
+    return response.data.posts;
+  } catch (error) {
+    console.error("Error fetching posts:", error.response?.data || error.message);
+    throw error;
+  }
 }
+
 
 
 export async function fetchUserByUsername(username) {

@@ -10,6 +10,8 @@ from ..utils.apps import Services
 
 from bson.objectid import ObjectId
 
+from datetime import datetime
+
 
 log = logging.getLogger('POST')
 
@@ -56,8 +58,8 @@ class Post(Resource):
     @api.doc(
         params={
             "user_id": {"description": "Filter posts by user ID.", "example": "671f880f5bf26ed4c9f540fd", "required": False},
-            "page": {"description": "Page number for pagination.", "example": 1, "required": False},
-            "limit": {"description": "Number of posts per page.", "example": 10, "required": False}
+            "last_timestamp": {"description": "Timestamp of the last fetched post (ISO format)", "example": "2025-01-01T12:00:00", "required": False},
+            "limit": {"description": "Number of posts to fetch", "example": 10, "required": False}
         }
     )
     @api.response(200, "OK")
@@ -65,44 +67,34 @@ class Post(Resource):
     @api.marshal_with(post_list_model, code=200)
     def get(self):
         """
-        Fetch posts based on optional filters (e.g., user ID, pagination)
+        Fetch posts based on optional filters (e.g., user ID, timestamp, pagination)
         """
         try:
+            # Read query parameters
             user_id = request.args.get('user_id')
-            page = int(request.args.get('page', 1))
+            last_timestamp = request.args.get('last_timestamp')
             limit = int(request.args.get('limit', 10))
-            log.info(f"Query Params - user_id: {user_id}, page: {page}, limit: {limit}")
-            queries = db()
 
+            # Initialize query
             query = {}
             if user_id:
-                query = {'user_id': ObjectId(user_id)}
-            
-            user_info = queries.get_user_by_id(user_id)
+                try:
+                    query['user_id'] = ObjectId(user_id)
+                except Exception:
+                    log.error(f"Invalid user_id format: {user_id}")
+                    return {"message": "Invalid user_id format."}, 400
 
-            skip = (page - 1) * limit
-            log.info(f"Fetching posts with query: {query}, skip: {skip}, limit: {limit}")
+            if last_timestamp:
+                try:
+                    query['timestamp'] = {'$lt': datetime.fromisoformat(last_timestamp)}
+                except ValueError:
+                    log.error(f"Invalid timestamp format: {last_timestamp}")
+                    return {"message": "Invalid timestamp format. Use ISO format."}, 400
 
-            posts = queries.fetch_posts(query=query, skip=skip, limit=limit)
+            log.info(f"Fetching posts with query: {query}, limit: {limit}")
 
-            for post in posts:
-                
-                
-                comments = queries.get_comments(post['id'])
-                log.info(f"Comments fetched: {comments}")
-                reactions = queries.get_reactions(post['id'])
-                log.info(f"Reactions fetched: {reactions}")
-                
-                post['images'] = eval(post['images']) if isinstance(post['images'], str) else post['images']
-                
-                post['user'] = {"id": user_id, "username": user_info["username"], "image": user_info["profile_picture_url"]}
-
-
-                for reaction in reactions:
-                    post['reactions'].append({'id': reaction['_id'], 'user_id': reaction['user_id'], 'reaction_type': reaction['reaction_type']})
-
-                for comment in comments:
-                    post['comments'].append({'id': comment['_id'], 'user_id': comment['user_id'], 'content': comment['content'], 'timestamp': comment['timestamp']})
+            # Fetch posts with aggregation pipeline
+            posts = db().fetch_posts(query=query, limit=limit)
 
             log.info(f"Posts fetched: {posts}")
             return {"posts": posts}, 200
@@ -110,6 +102,7 @@ class Post(Resource):
         except Exception as e:
             log.error(f"Error in GET /posts: {e}")
             return {"message": "Failed to fetch posts"}, 500
+
 
     def put(self):
         '''
