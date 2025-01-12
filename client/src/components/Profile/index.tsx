@@ -69,17 +69,6 @@ const Profile = () => {
     }
   }, [userData]);
 
-  // Fetch user posts
-  // useEffect(() => {
-  //   if (userData?.id) {
-  //     setLoadingPosts(true);
-  //     fetchPosts(userData.id)
-  //       .then((posts) => setUserPosts(posts))
-  //       .catch((err) => console.error("Failed to fetch posts:", err))
-  //       .finally(() => setLoadingPosts(false));
-  //   }
-  // }, [userData]);
-
   useEffect(() => {
     fetchMorePosts(); // Initial post fetch
   }, [userData]);
