@@ -36,7 +36,7 @@ status_model = api.model(
 user_model = api.model(
     'User model', 
     {
-        '_id': fields.String(description="ID of the user", example="1234"),
+        'id': fields.String(description="ID of the user", example="1234"),
         'username': fields.String(description="Username of the user", example="Julia"),
         'bio': fields.String(description="Bio of the user", example="bio"),
         'email': fields.String(description="Email address of the user", example="kasia@gmail.com"),
@@ -100,6 +100,7 @@ class User(Resource):
         queries = db()
 
         user_data = queries.get_user_by_username(username)
+        log.info(f"User data fetched: {user_data}")
 
         if not user_data:
             log.error(f'Error fetching data for {username}')

@@ -205,13 +205,13 @@ export async function putReaction(token, reaction_type, post_id) {
     });
 }
 
-export async function fetchPosts({ userId = null, page = 1, limit = 10 } = {}) {
+export async function fetchPosts(user_id = null, page = 1, limit = 10) {
   await servicesWait();
 
   const params = {
     page,
     limit,
-    ...(userId && { user_id: userId }),
+    ...(user_id && { user_id: user_id }),
   };
 
   return apiClient

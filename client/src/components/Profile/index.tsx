@@ -7,62 +7,58 @@ import useToken from "../contexts/TokenContext";
 import SectionTitle from "../Common/SectionTitle";
 import Post from "../Blog/Post";
 import jwtDecode from "jwt-decode";
+import Lottie from "react-lottie";
+import loaderAnimation from "@/static/animations/loader.json";
 
 const Profile = () => {
   const { username } = useParams();
   const [profilePicture, setProfilePicture] = useState<string | null | undefined>(undefined);
-  const [userData, setUserData] = useState({
-    id: "",
-    username: "",
-    bio: "",
-    email: "",
-    phone: "",
-    location: "",
-  });
-  const [userPosts, setUserPosts] = useState([]); // No change
-  const [loadingPosts, setLoadingPosts] = useState(false); // No change
+  const [userData, setUserData] = useState({});
+  const [userPosts, setUserPosts] = useState([]);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingPosts, setLoadingPosts] = useState(false);
   const { token } = useToken();
 
-  // Fetch user data when `username` changes
+  const loaderOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: loaderAnimation,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
+
+  // Fetch user data
   useEffect(() => {
     if (username) {
+      setLoadingUser(true);
       fetchUserByUsername(username)
-        .then((data) => {
-          setUserData({
-            id: data._id,
-            username: data.username,
-            bio: data.bio,
-            email: data.email || "Email not provided.",
-            phone: data.phone || "Phone number not provided.",
-            location: data.location || "Location not provided.",
-          });
-        })
-        .catch((err) => {
-          console.error("Failed to fetch user data", err);
-        });
+        .then((data) => setUserData(data))
+        .catch((err) => console.error("Failed to fetch user data:", err))
+        .finally(() => setLoadingUser(false));
     }
   }, [username]);
 
-  // Fetch profile picture when user ID is available
+  // Fetch profile picture
   useEffect(() => {
-    if (userData.id) {
-      setProfilePicture(undefined); // Added loading state reset
+    if (userData?.id) {
+      setProfilePicture(undefined); // Show loader while fetching profile picture
       fetchProfilePicture(userData.id)
         .then((url) => setProfilePicture(url))
-        .catch(() => setProfilePicture(null)); // Error handling
+        .catch(() => setProfilePicture(null)); // Handle error by setting profile picture as null
     }
-  }, [userData.id]);
+  }, [userData]);
 
-  // Fetch user posts when user ID is available
+  // Fetch user posts
   useEffect(() => {
-    if (userData.id) {
-      setLoadingPosts(true); // Added loading state reset
-      fetchPosts({ userId: userData.id })
+    if (userData?.id) {
+      setLoadingPosts(true);
+      fetchPosts(userData.id)
         .then((posts) => setUserPosts(posts))
         .catch((err) => console.error("Failed to fetch posts:", err))
         .finally(() => setLoadingPosts(false));
     }
-  }, [userData.id]);
+  }, [userData]);
 
   // Handle profile picture upload
   const handleChangeProfilePicture = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,7 +70,7 @@ const Profile = () => {
     if (selectedFile) {
       try {
         const newProfilePictureUrl = await uploadProfilePicture(token, selectedFile);
-        setProfilePicture(newProfilePictureUrl); // Update profile picture state with new URL
+        setProfilePicture(newProfilePictureUrl);
       } catch (error) {
         console.error("Failed to upload profile picture:", error);
       }
@@ -87,15 +83,13 @@ const Profile = () => {
       className="bg-gray-light dark:bg-bg-color-dark py-16 md:py-20 lg:py-28"
     >
       <div className="container">
-        {/* Section Title */}
         <SectionTitle title="Profile" paragraph="Account details and posts." center />
 
+        {/* Profile Picture Section */}
         <div className="flex flex-col items-center">
           <div className="relative h-32 w-32 mb-4">
             {profilePicture === undefined ? (
-              <div className="rounded-full bg-gray-300 h-full w-full flex items-center justify-center">
-                <span className="text-gray-600">Loading...</span>
-              </div>
+              <Lottie options={loaderOptions} height={128} width={128} />
             ) : profilePicture ? (
               <img
                 src={profilePicture}
@@ -107,13 +101,13 @@ const Profile = () => {
                 <span className="text-gray-600">No Image</span>
               </div>
             )}
-            {token && userData.id === jwtDecode(token).sub && (
+            {/* Profile Picture Upload Button */}
+            {token && userData?.id === jwtDecode(token).sub && (
               <label
                 htmlFor="profile-picture-upload"
                 className="absolute bottom-0 right-0 bg-green-600 text-white text-sm font-medium py-1 px-3 rounded-full shadow-lg hover:bg-green-500 transition duration-300 cursor-pointer"
               >
                 Change
-                {/* Changed button to use file input */}
                 <input
                   type="file"
                   id="profile-picture-upload"
@@ -125,31 +119,54 @@ const Profile = () => {
             )}
           </div>
 
-          {/* User details */}
+          {/* User Details */}
           <h3 className="text-xl font-semibold text-dark dark:text-white text-center">
-            {userData.username || "Loading username..."}
+            {loadingUser ? (
+              <Lottie options={loaderOptions} height={24} width={24} />
+            ) : (
+              userData?.username || "Unknown User"
+            )}
           </h3>
           <p className="text-sm text-body-color dark:text-gray-400 mt-2 text-center">
-            {userData.bio || "Loading bio..."}
+            {loadingUser ? (
+              <Lottie options={loaderOptions} height={24} width={24} />
+            ) : (
+              userData?.bio || "No bio provided."
+            )}
           </p>
           <p className="text-sm text-body-color dark:text-gray-400 mt-2 text-center">
-            <strong>Location: </strong>{userData.location}
+            <strong>Location: </strong>
+            {loadingUser ? (
+              <Lottie options={loaderOptions} height={24} width={24} />
+            ) : (
+              userData?.location || "Location not provided."
+            )}
           </p>
           <p className="text-sm text-body-color dark:text-gray-400 mt-2 text-center">
-            <strong>Email: </strong>{userData.email}
+            <strong>Email: </strong>
+            {loadingUser ? (
+              <Lottie options={loaderOptions} height={24} width={24} />
+            ) : (
+              userData?.email || "Email not provided."
+            )}
           </p>
           <p className="text-sm text-body-color dark:text-gray-400 mt-2 text-center">
-            <strong>Phone: </strong>{userData.phone}
+            <strong>Phone: </strong>
+            {loadingUser ? (
+              <Lottie options={loaderOptions} height={24} width={24} />
+            ) : (
+              userData?.phone || "Phone number not provided."
+            )}
           </p>
         </div>
 
         {/* Posts Section */}
-        {token ? (
-          <div className="w-full">
-            <SectionTitle title="Posts" paragraph="See all posts." />
-            {loadingPosts ? (
-              <div className="text-center text-gray-600 dark:text-gray-400 mt-8">
-                <p>Loading posts...</p>
+        <div className="w-full mt-8">
+          <SectionTitle title="Posts" paragraph="See all posts." />
+          {token ? (
+            loadingPosts ? (
+              <div className="flex justify-center">
+                <Lottie options={loaderOptions} height={128} width={128} />
               </div>
             ) : userPosts.length > 0 ? (
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2">
@@ -163,13 +180,13 @@ const Profile = () => {
               <div className="text-center text-gray-600 dark:text-gray-400 mt-8">
                 <p>No posts found.</p>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center text-gray-600 dark:text-gray-400 mt-8">
-            <p>Please sign in to see posts.</p>
-          </div>
-        )}
+            )
+          ) : (
+            <div className="text-center text-gray-600 dark:text-gray-400 mt-8">
+              <p>Please sign in to see posts.</p>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

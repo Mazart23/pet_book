@@ -46,7 +46,10 @@ class Queries(MongoDBConnect):
                 'posts': True,
                 'scans': True
             }
-            return self.find_one('users', filter, projection)
+            user = self.find_one('users', filter, projection)
+            if user:
+                user['id'] = user.pop('_id')  # Rename _id to id
+            return user
         except Exception as e:
             log.error(f'Error fetching user: {e}')
             return {}
@@ -459,7 +462,7 @@ class Queries(MongoDBConnect):
         """
         try:
 
-            posts = list(self.find('posts', query))
+            posts = list(self.find('posts', query) or [])
 
             posts.sort(key=lambda x: x['timestamp'], reverse=True)
             paginated_posts = posts[skip:skip + limit]
