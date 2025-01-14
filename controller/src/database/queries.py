@@ -217,7 +217,28 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f'Error updating user: {e}')
             return False
-    
+            
+    def create_user(self, username: str, email: str, hashed_password: bytes, phone: str):
+        try:
+            user_data = {
+                'username': username,
+                'email': email,
+                'hashed_password': hashed_password,
+                'phone': phone,
+                'profile_picture_url': "",
+                'bio': "",
+                'scans': [],
+                'posts': [],
+                'location': "",
+                'is_premium': False,
+                'is_private': False,
+            }
+            result = self.insert_one('users', user_data)
+            return result.inserted_id
+        except Exception as e:
+            log.error(f'Error creating user: {e}')
+            return False
+
     @MongoDBConnect.transaction
     def insert_scan(self, user_id: str, ip: str, city: str, latitude: float, longitude: float, timestamp: datetime, session=None) -> str | bool:
         try:
