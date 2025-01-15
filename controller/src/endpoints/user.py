@@ -200,7 +200,6 @@ class Signup(Resource):
         """Sign up a new user"""
         try:
             data = request.get_json()
-
             username = data.get('username')
             email = data.get('email')
             password = data.get('password')

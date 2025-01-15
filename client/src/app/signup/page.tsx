@@ -3,7 +3,6 @@ import SignupForm from "../../components/Signup/signupForm";
 
 export const metadata: Metadata = {
   title: "Sign Up Page",
-  // other metadata
 };
 
 export default function SignupPage() {

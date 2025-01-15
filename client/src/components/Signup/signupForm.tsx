@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaEye, FaEyeSlash, FaInfoCircle } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { postSignup } from "../../app/Api";
 
 interface FormData {
