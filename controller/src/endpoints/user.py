@@ -5,6 +5,7 @@ import bcrypt
 from flask import request
 from flask_restx import Resource, fields, Namespace
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from werkzeug.exceptions import BadRequest
 
 from ..database.queries import Queries as db
 from ..utils.apps import Url
@@ -191,7 +192,40 @@ class Login(Resource):
         
         access_token = create_access_token(identity=str(user['_id']))
         return {'access_token': access_token}, 200
+    
+@api.route('/signup')
+class Signup(Resource):
+    @api.expect(user_model, validate=True)
+    @api.response(200, 'User created successfully')
+    @api.response(400, 'Bad Request')
+    @api.response(500, 'Internal Server Error')
+    def post(self):
+        """Sign up a new user"""
+        try:
+            data = request.get_json()
+            username = data.get('username')
+            email = data.get('email')
+            password = data.get('password')
+            phone = data.get('phone')
 
+            queries = db()
+
+            if queries.get_user_by_username(username):
+                raise BadRequest('Username already exists')
+
+            if queries.get_user_by_email(email):
+                raise BadRequest('Email already exists')
+
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            user_id = queries.create_user(username, email, hashed_password, phone)
+
+            return {'message': 'User created successfully', 'user_id': str(user_id)}, 200
+
+        except BadRequest as e:
+            return {'message': str(e)}, 400
+        except Exception as e:
+            log.error(f'Error during user creation: {e}')
+            return {'message': 'Failed to create user'}, 500
 
 @api.route('/password')
 class Password(Resource):

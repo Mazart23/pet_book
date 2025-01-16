@@ -20,6 +20,23 @@ export async function postLogin(username, password) {
     });
 }
 
+export async function postSignup(username: string, email: string, password: string, phone?: string) {
+  await servicesWait();
+  return apiClient
+    .post(`${services.controller.url}/user/signup`, {
+      username,
+      email,
+      password,
+      phone
+    })
+    .then((response) => {
+      return response.data.message;
+    })
+    .catch((error) => {
+      throw error;
+    });
+}
+
 export async function fetchProfilePicture(userId) {
   await servicesWait();
   return apiClient
