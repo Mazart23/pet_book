@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { fetchProfilePicture, fetchUserByUsername, fetchPosts, uploadProfilePicture } from "@/app/Api";
+import { fetchProfilePicture, fetchUserByUsername, fetchPosts, uploadProfilePicture, updateUserInfo } from "@/app/Api";
 import useToken from "../contexts/TokenContext";
 import SectionTitle from "../Common/SectionTitle";
 import Post from "../Blog/Post";
 import jwtDecode from "jwt-decode";
 import Lottie from "react-lottie";
 import loaderAnimation from "@/static/animations/loader.json";
+import ProfileEditor from "./profile-editor";
 
 const Profile = () => {
   const { username } = useParams();
@@ -19,6 +20,7 @@ const Profile = () => {
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [lastFetchedTimestamp, setLastFetchedTimestamp] = useState<string | null>(null);
   const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const { token } = useToken();
 
   const loaderOptions = {
@@ -90,6 +92,21 @@ const Profile = () => {
     }
   };
 
+  const handleProfileUpdate = async (updatedData: any) => {
+    if (!token) {
+      console.error("No token available");
+      return;
+    }
+
+    try {
+      await updateUserInfo(token, updatedData);
+      setUserData({ ...userData, ...updatedData });
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    }
+  };
+
   return (
     <section
       id="profile"
@@ -140,37 +157,74 @@ const Profile = () => {
               userData?.username || "Unknown User"
             )}
           </h3>
-          <p className="text-sm text-body-color dark:text-gray-400 mt-2 text-center">
-            {loadingUser ? (
-              <Lottie options={loaderOptions} height={24} width={24} />
-            ) : (
-              userData?.bio || "No bio provided."
-            )}
-          </p>
-          <p className="text-sm text-body-color dark:text-gray-400 mt-2 text-center">
-            <strong>Location: </strong>
-            {loadingUser ? (
-              <Lottie options={loaderOptions} height={24} width={24} />
-            ) : (
-              userData?.location || "Location not provided."
-            )}
-          </p>
-          <p className="text-sm text-body-color dark:text-gray-400 mt-2 text-center">
-            <strong>Email: </strong>
-            {loadingUser ? (
-              <Lottie options={loaderOptions} height={24} width={24} />
-            ) : (
-              userData?.email || "Email not provided."
-            )}
-          </p>
-          <p className="text-sm text-body-color dark:text-gray-400 mt-2 text-center">
-            <strong>Phone: </strong>
-            {loadingUser ? (
-              <Lottie options={loaderOptions} height={24} width={24} />
-            ) : (
-              userData?.phone || "Phone number not provided."
-            )}
-          </p>
+
+          {!loadingUser && token && userData?.id === jwtDecode(token).sub && (
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="mt-2 text-sm text-green-600 hover:text-blue-500 dark:text-green-400 dark:hover:text-green-300"
+            >
+              {isEditing ? "Cancel Editing" : "Edit Profile"}
+            </button>
+          )}
+
+          {isEditing ? (
+            <div className="w-full max-w-md mt-4">
+              <ProfileEditor
+                initialData={{
+                  bio: userData?.bio,
+                  email: userData?.email,
+                  location: userData?.location,
+                  phone: userData?.phone,
+                  is_private: userData?.is_private,
+                }}
+                onSave={handleProfileUpdate}
+                onCancel={() => setIsEditing(false)}
+              />
+            </div>
+          ) : (
+            <div className="space-y-2 mt-4">
+              <p className="text-sm text-body-color dark:text-gray-400 text-center">
+                {loadingUser ? (
+                  <Lottie options={loaderOptions} height={24} width={24} />
+                ) : (
+                  userData?.bio || "No bio provided."
+                )}
+              </p>
+              <p className="text-sm text-body-color dark:text-gray-400 text-center">
+                <strong>Location: </strong>
+                {loadingUser ? (
+                  <Lottie options={loaderOptions} height={24} width={24} />
+                ) : userData?.is_private &&
+                  (!token || userData?.id !== jwtDecode(token).sub) ? (
+                  "Private"
+                ) : (
+                  userData?.location || "Location not provided."
+                )}
+              </p>
+              <p className="text-sm text-body-color dark:text-gray-400 text-center">
+                <strong>Email: </strong>
+                {loadingUser ? (
+                  <Lottie options={loaderOptions} height={24} width={24} />
+                ) : userData?.is_private &&
+                  (!token || userData?.id !== jwtDecode(token).sub) ? (
+                  "Private"
+                ) : (
+                  userData?.email || "Email not provided."
+                )}
+              </p>
+              <p className="text-sm text-body-color dark:text-gray-400 text-center">
+                <strong>Phone: </strong>
+                {loadingUser ? (
+                  <Lottie options={loaderOptions} height={24} width={24} />
+                ) : userData?.is_private &&
+                  (!token || userData?.id !== jwtDecode(token).sub) ? (
+                  "Private"
+                ) : (
+                  userData?.phone || "Phone number not provided."
+                )}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Posts Section */}
@@ -193,7 +247,7 @@ const Profile = () => {
               {!loadingPosts && hasMorePosts && (
                 <div className="flex justify-center mt-8">
                   <button
-                    className="bg-blue-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-500 transition duration-300"
+                    className="bg-green-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-green-500 transition duration-300"
                     onClick={fetchMorePosts}
                   >
                     Load More

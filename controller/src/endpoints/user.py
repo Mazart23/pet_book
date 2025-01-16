@@ -147,6 +147,34 @@ class Self(Resource):
             api.abort(404, "User Not Found")
         
         return user_data, 200
+    
+    @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
+    @api.response(401, 'Unauthorized')
+    @jwt_required()
+    def put(self):
+        '''
+        Update self user data
+        '''
+        user_id = get_jwt_identity()
+        data = request.get_json()
+
+        queries = db()
+
+        valid_fields = {
+            'bio', 'email', 'location',
+            'is_private', 'phone'
+        }
+        if not all(field in valid_fields for field in data.keys()):
+            return {"message": "Invalid fields in request"}, 400
+
+        updated = queries.update_user_by_id(user_id, data)
+
+        if not updated:
+            log.error(f'Error updating data for {user_id}')
+            api.abort(400, "Update Failed")
+
+        return {"message": "User data updated successfully"}, 200
 
 # TESTOWANIE BAZY
 @api.route('/user-data')

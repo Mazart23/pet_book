@@ -53,6 +53,17 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f'Error fetching user: {e}')
             return {}
+    
+    def update_user_by_id(self, id: str, updates: dict) -> bool:
+        try:
+            filter = {'_id': ObjectId(id)}
+            update = {'$set': updates}
+
+            result = self.update_one('users', filter, update)
+            return result.modified_count > 0
+        except Exception as e:
+            log.error(f'Error updating user: {e}')
+            return False
         
     def get_user_password_by_username(self, username: str) -> dict:
         try:
