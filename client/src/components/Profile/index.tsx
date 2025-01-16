@@ -38,21 +38,19 @@ const Profile = () => {
     if (!userData?.id || !hasMorePosts || loadingPosts) return;
 
     setLoadingPosts(true);
-    fetchPosts(userData.id, lastFetchedTimestamp) // Pass last fetched timestamp for pagination
+    fetchPosts(userData.id, lastFetchedTimestamp)
       .then((posts) => {
         if (posts.length > 0) {
-          setUserPosts((prevPosts) => [...prevPosts, ...posts]); // Append new posts
-          setLastFetchedTimestamp(posts[posts.length - 1].timestamp); // Update timestamp
+          setUserPosts((prevPosts) => [...prevPosts, ...posts]);
+          setLastFetchedTimestamp(posts[posts.length - 1].timestamp);
         } else {
-          setHasMorePosts(false); // No more posts available
+          setHasMorePosts(false);
         }
       })
       .catch((err) => console.error("Failed to fetch posts:", err))
       .finally(() => setLoadingPosts(false));
   };
 
-
-  // Fetch user data
   useEffect(() => {
     if (username) {
       setLoadingUser(true);
@@ -63,21 +61,19 @@ const Profile = () => {
     }
   }, [username]);
 
-  // Fetch profile picture
   useEffect(() => {
     if (userData?.id) {
-      setProfilePicture(undefined); // Show loader while fetching profile picture
+      setProfilePicture(undefined);
       fetchProfilePicture(userData.id)
         .then((url) => setProfilePicture(url))
-        .catch(() => setProfilePicture(null)); // Handle error by setting profile picture as null
+        .catch(() => setProfilePicture(null));
     }
   }, [userData]);
 
   useEffect(() => {
-    fetchMorePosts(); // Initial post fetch
+    fetchMorePosts();
   }, [userData]);
 
-  // Handle profile picture upload
   const handleChangeProfilePicture = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!token) {
       console.error("No token available");
@@ -101,9 +97,13 @@ const Profile = () => {
     }
 
     try {
-      await updateUserInfo(token, updatedData);
-      setUserData({ ...userData, ...updatedData });
+      const response = await updateUserInfo(token, updatedData);
       setIsEditing(false);
+      if (response.status === 200) {
+        setUserData({ ...userData, ...updatedData });
+      } else {
+        console.error("Failed to update profile: Non-200 response status", response.status);
+      }
     } catch (error) {
       console.error("Failed to update profile:", error);
     }
@@ -117,7 +117,6 @@ const Profile = () => {
       <div className="container">
         <SectionTitle title="Profile" paragraph="Account details and posts." center />
 
-        {/* Profile Picture Section */}
         <div className="flex flex-col items-center">
           <div className="relative h-32 w-32 mb-4">
             {profilePicture === undefined ? (
@@ -129,14 +128,13 @@ const Profile = () => {
                 className="rounded-full object-cover shadow-md h-full w-full"
               />
             ) : (
-            <SiDatadog
-              className="h-full w-full rounded-full object-cover border-2 border-solid border-indigo-900 shadow-md"
-              style={{
-                color: getColorFromUsername(userData?.username || "default"),
-              }}
-            />
+              <SiDatadog
+                className="h-full w-full rounded-full object-cover border-2 border-solid border-indigo-900 shadow-md"
+                style={{
+                  color: getColorFromUsername(userData?.username || "default"),
+                }}
+              />
             )}
-            {/* Profile Picture Upload Button */}
             {token && userData?.id === jwtDecode(token).sub && (
               <label
                 htmlFor="profile-picture-upload"
@@ -154,25 +152,47 @@ const Profile = () => {
             )}
           </div>
 
-          {/* User Details */}
-          <h3 className="text-xl font-semibold text-dark dark:text-white text-center">
-            {loadingUser ? (
-              <Lottie options={loaderOptions} height={24} width={24} />
-            ) : (
-              userData?.username || "Unknown User"
-            )}
-          </h3>
+          {loadingUser ? (
+            <Lottie options={loaderOptions} height={64} width={64} />
+          ) : (
+            <div className="space-y-2 mt-4 text-center">
+              <h3 className="text-xl font-semibold text-dark dark:text-white">
+                {userData?.username || "Unknown User"}
+              </h3>
+              <p className="text-sm text-body-color dark:text-gray-400">
+                {userData?.bio || "No bio provided."}
+              </p>
+              <p className="text-sm text-body-color dark:text-gray-400">
+                <strong>Location: </strong>
+                {userData?.is_private && (!token || userData?.id !== jwtDecode(token).sub)
+                  ? "Private"
+                  : userData?.location || "Location not provided."}
+              </p>
+              <p className="text-sm text-body-color dark:text-gray-400">
+                <strong>Email: </strong>
+                {userData?.is_private && (!token || userData?.id !== jwtDecode(token).sub)
+                  ? "Private"
+                  : userData?.email || "Email not provided."}
+              </p>
+              <p className="text-sm text-body-color dark:text-gray-400">
+                <strong>Phone: </strong>
+                {userData?.is_private && (!token || userData?.id !== jwtDecode(token).sub)
+                  ? "Private"
+                  : userData?.phone || "Phone number not provided."}
+              </p>
+            </div>
+          )}
 
           {!loadingUser && token && userData?.id === jwtDecode(token).sub && (
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="mt-2 text-sm text-green-600 hover:text-blue-500 dark:text-green-400 dark:hover:text-green-300"
+              className="mt-2 text-sm text-green-600 hover:text-green-500 dark:text-green-400 dark:hover:text-green-300"
             >
               {isEditing ? "Cancel Editing" : "Edit Profile"}
             </button>
           )}
 
-          {isEditing ? (
+          {isEditing && (
             <div className="w-full max-w-md mt-4">
               <ProfileEditor
                 initialData={{
@@ -186,53 +206,9 @@ const Profile = () => {
                 onCancel={() => setIsEditing(false)}
               />
             </div>
-          ) : (
-            <div className="space-y-2 mt-4">
-              <p className="text-sm text-body-color dark:text-gray-400 text-center">
-                {loadingUser ? (
-                  <Lottie options={loaderOptions} height={24} width={24} />
-                ) : (
-                  userData?.bio || "No bio provided."
-                )}
-              </p>
-              <p className="text-sm text-body-color dark:text-gray-400 text-center">
-                <strong>Location: </strong>
-                {loadingUser ? (
-                  <Lottie options={loaderOptions} height={24} width={24} />
-                ) : userData?.is_private &&
-                  (!token || userData?.id !== jwtDecode(token).sub) ? (
-                  "Private"
-                ) : (
-                  userData?.location || "Location not provided."
-                )}
-              </p>
-              <p className="text-sm text-body-color dark:text-gray-400 text-center">
-                <strong>Email: </strong>
-                {loadingUser ? (
-                  <Lottie options={loaderOptions} height={24} width={24} />
-                ) : userData?.is_private &&
-                  (!token || userData?.id !== jwtDecode(token).sub) ? (
-                  "Private"
-                ) : (
-                  userData?.email || "Email not provided."
-                )}
-              </p>
-              <p className="text-sm text-body-color dark:text-gray-400 text-center">
-                <strong>Phone: </strong>
-                {loadingUser ? (
-                  <Lottie options={loaderOptions} height={24} width={24} />
-                ) : userData?.is_private &&
-                  (!token || userData?.id !== jwtDecode(token).sub) ? (
-                  "Private"
-                ) : (
-                  userData?.phone || "Phone number not provided."
-                )}
-              </p>
-            </div>
           )}
         </div>
 
-        {/* Posts Section */}
         <div className="w-full mt-8">
           <SectionTitle title="Posts" paragraph="See all posts." />
           {token ? (

@@ -261,15 +261,14 @@ export async function fetchComments(post_id = null, last_timestamp = null, limit
 export async function updateUserInfo(token, updatedData) {
   await servicesWait();
   return apiClient
-  .put(`${services.controller.url}/user/self`, updatedData, {
-    headers: {
-      Authorization: `Bearer ${token}`, 
-    },
-  })
-  .then((response) => response.data)
-  .catch((error) => {
-    throw error;
-  });
+      .put(`${services.controller.url}/user/self`, updatedData, {
+          headers: {
+              Authorization: `Bearer ${token}`, 
+          },
+      })
+      .catch((error) => {
+          throw error;
+      });
 }
 
 export async function fetchUserByUsername(username) {
