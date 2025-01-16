@@ -10,6 +10,8 @@ import jwtDecode from "jwt-decode";
 import Lottie from "react-lottie";
 import loaderAnimation from "@/static/animations/loader.json";
 import ProfileEditor from "./profile-editor";
+import { SiDatadog } from "react-icons/si";
+import { getColorFromUsername } from "@/app/layout";
 
 const Profile = () => {
   const { username } = useParams();
@@ -127,9 +129,12 @@ const Profile = () => {
                 className="rounded-full object-cover shadow-md h-full w-full"
               />
             ) : (
-              <div className="rounded-full bg-gray-300 h-full w-full flex items-center justify-center">
-                <span className="text-gray-600">No Image</span>
-              </div>
+            <SiDatadog
+              className="h-full w-full rounded-full object-cover border-2 border-solid border-indigo-900 shadow-md"
+              style={{
+                color: getColorFromUsername(userData?.username || "default"),
+              }}
+            />
             )}
             {/* Profile Picture Upload Button */}
             {token && userData?.id === jwtDecode(token).sub && (
