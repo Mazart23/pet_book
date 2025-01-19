@@ -1,16 +1,11 @@
 import logging
+from datetime import datetime
 
 from flask import request
 from flask_restx import Resource, fields, Namespace
-from flask_jwt_extended import jwt_required
-
-from ..database.queries import Queries as db
-from ..utils.request import send_request
-from ..utils.apps import Services
-
 from bson.objectid import ObjectId
 
-from datetime import datetime
+from ..database.queries import Queries as db
 
 
 log = logging.getLogger('POST')
@@ -21,17 +16,6 @@ reaction_model = api.model('Reaction', {
     'id': fields.String(description="Unique ID of the reaction", example="12345"),
     'user_id': fields.String(description="ID of the user who reacted", example="671f880f5bf26ed4c9f540fd"),
     'reaction_type': fields.String(description="Type of reaction", example="heart")
-})
-
-comment_model = api.model('Comment', {
-    'id': fields.String(description="Unique ID of the comment", example="12345"),
-    'content': fields.String(description="content of comment", example="great pic!"),
-    'timestamp': fields.String(description="Timestamp of the comment", example="2024-12-05 21:18:07"),
-    'user': fields.Nested(api.model('User', {
-        'id': fields.String(description="User ID of the post creator", example="671f880f5bf26ed4c9f540fd"),
-        'username': fields.String(description="Username of the post creator", example="Julia"),
-        'image': fields.String(description="Profile image URL of the post creator", example="https://i.imgur.com/9P3c7an.jpeg")
-    }), description="User information of the post creator")
 })
 
 post_model = api.model('Post', {
@@ -53,11 +37,6 @@ post_model = api.model('Post', {
 post_list_model = api.model('PostList', {
     'posts': fields.List(fields.Nested(post_model), description="List of posts")
 })
-
-comments_list_model = api.model('CommentsList', {
-    'comments': fields.List(fields.Nested(comment_model), description="List of comments for a given post")
-})
-
 
 
 @api.route('/')
@@ -125,53 +104,37 @@ class Post(Resource):
         '''
         delete
         '''
-    
-@api.route('/comments')
-class PostComments(Resource):
+
+@api.route('/single')
+class SinglePost(Resource):
     @api.doc(
         params={
-            "post_id": {"description": "Filter comments by post ID.", "example": "671f880f5bf26ed4c9f540fd", "required": False},
-            "last_timestamp": {"description": "Timestamp of the last fetched post (ISO format)", "example": "2025-01-01T12:00:00", "required": False},
-            "limit": {"description": "Number of posts to fetch", "example": 10, "required": False}
+            "id": {"description": "Unique ID of the post.", "example": "671f880f5bf26ed4c9f540fd", "required": True},
+            'Authorization': {
+                'description': 'Bearer token for authentication',
+                'required': True,
+                'in': 'header',
+                'default': 'Bearer '
+            }
         }
     )
     @api.response(200, "OK")
-    @api.response(500, "Failed to fetch comments")
-    @api.marshal_with(comments_list_model, code=200)
+    @api.response(500, "Internal Server Error")
+    @api.marshal_with(post_model, code=200)
     def get(self):
         """
-        Fetch comments for post 
+        Fetch single post based on its ID
         """
         try:
-            # Read query parameters
-            post_id = request.args.get('post_id')
-            last_timestamp = request.args.get('last_timestamp')
-            limit = int(request.args.get('limit', 10))
+            post_id = request.args.get('id')
+            
+            post = db().fetch_posts(query={'_id': ObjectId(post_id)}, limit=1)
 
-            # Initialize query
-            query = {}
-            if post_id:
-                try:
-                    query['post_id'] = ObjectId(post_id)
-                except Exception:
-                    log.error(f"Invalid user_id format: {post_id}")
-                    return {"message": "Invalid post_id format."}, 400
+            assert post
 
-            if last_timestamp:
-                try:
-                    query['timestamp'] = {'$lt': datetime.fromisoformat(last_timestamp)}
-                except ValueError:
-                    log.error(f"Invalid timestamp format: {last_timestamp}")
-                    return {"message": "Invalid timestamp format. Use ISO format."}, 400
-
-            log.info(f"Fetching comments with query: {query}, limit: {limit}")
-
-            # Fetch comments with aggregation pipeline
-            comments = db().fetch_comments(query=query, limit=limit)
-
-            log.info(f"Comments fetched: {comments}")
-            return {"posts": comments}, 200
+            log.info(f"Post fetched: {post}")
+            return post[0], 200
 
         except Exception as e:
-            log.error(f"Error in GET /comments: {e}")
-            return {"message": "Failed to fetch comments"}, 500
+            log.error(f"Error: {e}")
+            return {"message": "Failed to fetch post"}, 500

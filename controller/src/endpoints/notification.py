@@ -13,15 +13,6 @@ log = logging.getLogger('NOTIFICATION')
 
 api = Namespace('notification')
 
-auth_parser = api.parser()
-auth_parser.add_argument(
-    'Authorization', 
-    location='headers', 
-    required=True, 
-    help='Bearer token for authentication',
-    type=str,
-    default='Bearer ',
-)
 
 base_model = api.model(
     'Base Notification Model', 
