@@ -1,7 +1,8 @@
-from bson.objectid import ObjectId
-from bson.binary import Binary
 import logging
 from datetime import datetime
+
+from bson.objectid import ObjectId
+from bson.binary import Binary
 
 from . import MongoDBConnect
 
@@ -89,6 +90,14 @@ class Queries(MongoDBConnect):
         try:
             filter = {'_id': ObjectId(id)}
             return self.find_one('posts', filter)
+        except Exception as e:
+            log.error(f'Error fetching post: {e}')
+            return {}
+    
+    def get_comment_by_id(self, id: str) -> dict:
+        try:
+            filter = {'_id': ObjectId(id)}
+            return self.find_one('comments', filter)
         except Exception as e:
             log.error(f'Error fetching post: {e}')
             return {}
@@ -420,9 +429,9 @@ class Queries(MongoDBConnect):
             return False
     
     @MongoDBConnect.transaction
-    def delete_comment(self, comment_id: str, post_id: str, session=None) -> bool:
+    def delete_comment(self, comment_id: str, session=None) -> bool:
         try:
-            delete_result = self.delete_one(
+            delete_result = self.find_one_and_delete(
                 'comments',
                 {
                     "_id": ObjectId(comment_id)
@@ -430,25 +439,25 @@ class Queries(MongoDBConnect):
                 session=session
             )
             
-            if delete_result.deleted_count == 0:
-                log.info(f"Comment not deleted for {comment_id = }, {post_id = }")
+            if not delete_result:
+                log.info(f"Comment not deleted for {comment_id = }")
                 return False
 
             update_result = self.update_one(
                 'posts',
-                {'_id': ObjectId(post_id)},
-                {'$pull': {'comments': ObjectId(comment_id)}},
+                {'_id': delete_result.get('post_id')},
+                {'$pull': {'comments': delete_result.get('_id')}},
                 session=session
             )
 
             if update_result.modified_count == 0:
-                log.info(f"Comment not removed from post {post_id = }, {comment_id = }")
+                log.info(f"Comment not removed from post {delete_result.get('post_id')}, {comment_id = }")
                 return False
             
             return True
         
         except Exception as e:
-            log.error(f"Error during deleting comment: {comment_id = }, {post_id = }, Error = {e}")
+            log.error(f"Error during deleting comment: {comment_id = }, Error = {e}")
             return False
     
     @MongoDBConnect.transaction

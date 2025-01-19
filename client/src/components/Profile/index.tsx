@@ -6,9 +6,9 @@ import { fetchProfilePicture, fetchUserByUsername, fetchPosts, uploadProfilePict
 import useToken from "../contexts/TokenContext";
 import SectionTitle from "../Common/SectionTitle";
 import Post from "../Blog/Post";
-import jwtDecode from "jwt-decode";
 import Lottie from "react-lottie";
 import loaderAnimation from "@/static/animations/loader.json";
+import useUser from "../contexts/UserContext";
 import ProfileEditor from "./profile-editor";
 import { SiDatadog } from "react-icons/si";
 import { getColorFromUsername } from "@/app/layout";
@@ -24,6 +24,7 @@ const Profile = () => {
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const { token } = useToken();
+  const { userSelf } = useUser();
 
   const loaderOptions = {
     loop: true,
@@ -135,7 +136,8 @@ const Profile = () => {
                 }}
               />
             )}
-            {token && userData?.id === jwtDecode(token).sub && (
+            {/* Profile Picture Upload Button */}
+            {token && userData?.id === userSelf?.id && (
               <label
                 htmlFor="profile-picture-upload"
                 className="absolute bottom-0 right-0 bg-green-600 text-white text-sm font-medium py-1 px-3 rounded-full shadow-lg hover:bg-green-500 transition duration-300 cursor-pointer"

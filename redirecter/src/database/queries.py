@@ -1,4 +1,5 @@
 import logging
+
 from bson.objectid import ObjectId
 
 from . import MongoDBConnect

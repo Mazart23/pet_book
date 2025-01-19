@@ -1,23 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SectionTitle from "../Common/SectionTitle";
 import Post from "./Post";
 import PostForm from "./PostForm";
-import postData from "./postData";
-import { createPost } from "@/app/Api";
+import { fetchPosts, createPost } from "@/app/Api";
+import Lottie from "react-lottie";
+import catAnimation from "@/static/animations/cat.json";
 import useToken from "../contexts/TokenContext";
 
 const Blog = () => {
-  const [posts, setPosts] = useState(postData);
+  const [postData, setPostData] = useState([]);
+  const [lastTimestamp, setLastTimestamp] = useState();
+  const [isAllLoaded, setIsAllLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const { token } = useToken();
 
-  const handleCreatePost = async (content: string, images: File[], location: string | null) => {
-    if (!token) {
-      console.error("No token available");
-      return;
-    }
+  const fetchPostsFunc = () => {
+    setIsLoading(true);
+    fetchPosts(null, lastTimestamp, 6).then((data) => {
+      if (data.length !== 0) {
+        setPostData((prev) => prev.concat(data));
+        setLastTimestamp(data.at(-1).timestamp);
+      } 
+      if (data.length < 6) {
+        setIsAllLoaded(true);
+      }
+      setIsLoading(false);
+    });
+  };
 
+  useEffect(() => {
+    if (token) {
+      fetchPostsFunc();
+      setIsLoaded(true);
+    }
+  }, [token]);
+
+
+  const handleCreatePost = async (content: string, images: File[], location: string | null) => {
     try {
       // Create a FormData object to send the post data including images
       const formData = new FormData();
@@ -28,7 +50,7 @@ const Blog = () => {
       });
 
       const newPost = await createPost(token, formData);
-      setPosts([newPost, ...posts]);
+      setPostData([newPost, ...postData]);
     } catch (error) {
       console.error("Failed to create post:", error);
     }
@@ -60,6 +82,35 @@ const Blog = () => {
             </div>
           ))}
         </div>
+        {isLoading || !isLoaded ? (
+          <div className="text-center text-gray-600 dark:text-gray-400 mt-8">
+            <Lottie 
+              options={{
+                loop: true,
+                autoplay: true,
+                animationData: catAnimation,
+                rendererSettings: {
+                  preserveAspectRatio: 'xMidYMid slice'
+                }
+              }}
+              height={100} 
+              width={100} 
+            />
+          </div>  
+        ) : !isAllLoaded ? (
+          <div className="flex justify-center">
+            <span
+              onClick={fetchPostsFunc}
+              className="mt-8 mx-10 text-lg font-large leading-snug text-green-400 hover:text-green-500 outline-none border-none cursor-pointer"
+            >
+              Load more
+            </span>
+          </div>
+        ) : (
+          <div className="text-center text-gray-600 dark:text-gray-400 mt-8">
+            <p>No more posts to fetch.</p>
+          </div>
+        )}
       </div>
     </section>
   );
