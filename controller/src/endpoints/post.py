@@ -1,12 +1,14 @@
 import logging
+import os
 
 from flask import request
 from flask_restx import Resource, fields, Namespace
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from ..database.queries import Queries as db
 from ..utils.request import send_request
 from ..utils.apps import Services
+from ..utils.apps import Url
 
 from bson.objectid import ObjectId
 
@@ -111,10 +113,74 @@ class Post(Resource):
             return {"message": "Failed to fetch posts"}, 500
 
 
+    @jwt_required()
+    @api.response(201, "Post created successfully")
+    @api.response(400, "Invalid data provided")
+    @api.response(500, "Failed to create post")
     def put(self):
-        '''
-        create
-        '''
+        """
+        Create a new post
+        """
+        user_id = get_jwt_identity()
+        queries = db()  
+
+        try:
+            # Parse form data
+            content = request.form.get('content')
+            location = request.form.get('location')
+            files = request.files.getlist('images')
+
+            # Validate required fields
+            if not content:
+                return {"message": "'content' is a required field."}, 400
+
+            # Validate user existence
+            user = queries.get_user_by_id(user_id)
+            if not user:
+                return {"message": "User not found"}, 404
+
+            # Upload files to Imgur
+            image_urls = []
+            if files:
+                headers = {"Authorization": f"Client-ID {os.environ.get('IMGUR_CLIENT_ID')}"}
+
+                for file in files:
+                    try:
+                        response = send_request('POST', Url.IMGUR, files={'image': file}, headers=headers)
+
+                        if response.status_code != 200:
+                            log.error(f"Failed to upload image to Imgur: {response}")
+                            return {"message": "Failed to upload one or more images to Imgur."}, 500
+
+                        imgur_data = response.json()
+                        image_urls.append(imgur_data['data']['link'])
+
+                    except Exception as e:
+                        log.error(f"Exception during file upload to Imgur: {e}")
+                        return {"message": "Failed to upload images to Imgur."}, 500
+
+            # Prepare post data
+            post_data = {
+                "description": content,   
+                "images_urls": image_urls,
+                "comments": [],
+                "timestamp": datetime.utcnow(),
+                "location": location,
+                "reactions": [],
+                "user_id": ObjectId(user_id),  
+            }
+
+            # Insert post into the database
+            post_id = queries.create_post(post_data)
+            if not post_id:
+                return {"message": "Failed to create post."}, 500
+
+            log.info(f"Post created successfully with ID: {post_id}")
+            return {"message": "Post created successfully", "post_id": str(post_id), "images": image_urls}, 201
+
+        except Exception as e:
+            log.error(f"Error in PUT /posts: {e}")
+            return {"message": "An unexpected error occurred."}, 500
 
     def patch(self):
         '''

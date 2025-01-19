@@ -9,6 +9,7 @@ import { Post } from "@/types/post";
 import { fetchProfilePicture, fetchReaction, deleteReaction, putReaction } from "@/app/Api";
 import { getColorFromUsername } from "@/app/layout";
 import { SiDatadog } from "react-icons/si";
+import { ImageOff } from 'lucide-react';
 import useToken from "../contexts/TokenContext";
 import useUser from "../contexts/UserContext";
 import jwtDecode from "jwt-decode";
@@ -41,8 +42,6 @@ const Post = ({ post }: { post: Post }) => {
   const [reactionsCounts, setReactionsCounts] = useState(reactionsArray);
   const {token} = useToken();
   const {currentUser} = useUser();
-
- 
 
   useEffect(() => {
     fetchProfilePicture(user.id)
@@ -99,7 +98,16 @@ const Post = ({ post }: { post: Post }) => {
             {location}
           </span>
         }
-        <Image src={images[0]} alt="image" fill />
+        {images && images.length > 0 ? (
+          <Image src={images[0] || "/placeholder.svg"} alt="Post image" fill className="object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div className="text-center">
+              <ImageOff className="w-12 h-12 mx-auto mb-2 text-gray-400 dark:text-gray-600" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">No image attached</p>
+            </div>
+          </div>
+        )}
       </Link>
       <div className="p-6 sm:p-8 md:px-6 md:py-8 lg:p-8 xl:px-5 xl:py-8 2xl:p-8">
         <p className="mb-6 border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
@@ -152,8 +160,8 @@ const Post = ({ post }: { post: Post }) => {
             <h4 className="mb-1 text-sm font-small text-dark dark:text-white">
               Date
             </h4>
-            {timestamp.split(' ').map((t) => (
-              <p className="text-xs text-body-color">{t}</p>
+            {timestamp.split(' ').map((t, i) => (
+              <p key={i} className="text-xs text-body-color">{t}</p>
             ))}
           </div>
           <div className="mx-1 h-16 w-px bg-body-color dark:bg-white opacity-10"></div>
@@ -185,3 +193,4 @@ const Post = ({ post }: { post: Post }) => {
 };
 
 export default Post;
+
