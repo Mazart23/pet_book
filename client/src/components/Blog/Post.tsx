@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import Lottie from "react-lottie";
 import loaderAnimation from "@/static/animations/loader.json";
-import { ImageOff } from 'lucide-react';
 import { Post } from "@/types/post";
 import { deleteReaction, putReaction } from "@/app/Api";
 import { getColorFromUsername } from "@/app/layout";

@@ -313,6 +313,7 @@ export async function putComment(token, content, post_id) {
       console.log(error);
       throw error;
     });
+}
 
 export async function updateUserInfo(token, updatedData) {
   await servicesWait();

@@ -33,7 +33,17 @@ const Blog = () => {
 
   useEffect(() => {
     if (token) {
-      fetchPostsFunc();
+      setIsLoading(true);
+      fetchPosts(null, lastTimestamp, 6).then((data) => {
+        if (data.length !== 0) {
+          setPostData(data);
+          setLastTimestamp(data.at(-1).timestamp);
+        } 
+        if (data.length < 6) {
+          setIsAllLoaded(true);
+        }
+        setIsLoading(false);
+      });
       setIsLoaded(true);
     }
   }, [token]);

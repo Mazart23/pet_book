@@ -85,8 +85,8 @@ const Comments = ({postId}: {postId: string}) => {
   };
 
   return (
-    <div className="relative h-full overflow-hidden">
-      <h3 className="sticky top-0 z-10 bg-white dark:bg-gray-dark border-b border-body-color border-opacity-10 px-8 py-4 mt-16 text-lg font-semibold text-black dark:border-white dark:border-opacity-10 dark:text-white">
+    <div className="relative h-full overflow-hidden my-8">
+      <h3 className="sticky top-0 z-10 bg-white dark:bg-gray-dark border-b border-body-color border-opacity-10 px-8 py-4 text-lg font-semibold text-black dark:border-white dark:border-opacity-10 dark:text-white">
         Comments
       </h3>
       <ul className="p-8 pb-32 overflow-y-auto h-full">
@@ -143,7 +143,7 @@ const Comments = ({postId}: {postId: string}) => {
           </div>
         )}
       </ul>
-      <div className="sticky relative inset-x-0 bottom-0 flex items-center p-4 mb-16 border-t border-body-color border-opacity-10 bg-gray-100 dark:bg-gray-800 dark:border-white dark:border-opacity-10">
+      <div className="sticky relative inset-x-0 bottom-0 flex items-center p-4 border-t border-body-color border-opacity-10 bg-gray-100 dark:bg-gray-800 dark:border-white dark:border-opacity-10">
         <textarea
           value={newComment}
           onChange={(e) => {
