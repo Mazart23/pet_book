@@ -20,6 +20,23 @@ export async function postLogin(username, password) {
     });
 }
 
+export async function postSignup(username: string, email: string, password: string, phone?: string) {
+  await servicesWait();
+  return apiClient
+    .post(`${services.controller.url}/user/signup`, {
+      username,
+      email,
+      password,
+      phone
+    })
+    .then((response) => {
+      return response.data.message;
+    })
+    .catch((error) => {
+      throw error;
+    });
+}
+
 export async function fetchProfilePicture(userId) {
   await servicesWait();
   return apiClient
@@ -260,6 +277,7 @@ export async function getComments(token, post_id = null, last_timestamp = null, 
     });
 }
 
+
 export async function deleteComment(token, id) {
   await servicesWait();
   return apiClient
@@ -295,6 +313,18 @@ export async function putComment(token, content, post_id) {
       console.log(error);
       throw error;
     });
+
+export async function updateUserInfo(token, updatedData) {
+  await servicesWait();
+  return apiClient
+      .put(`${services.controller.url}/user/self`, updatedData, {
+          headers: {
+              Authorization: `Bearer ${token}`, 
+          },
+      })
+      .catch((error) => {
+          throw error;
+      });
 }
 
 export async function fetchUserByUsername(username) {
@@ -308,3 +338,21 @@ export async function fetchUserByUsername(username) {
       throw error;
     });
 }
+
+export async function createPost(token, formData: FormData) {
+  await servicesWait();
+
+  return apiClient
+    .put(`${services.controller.url}/post/`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then((response) => response.data)
+    .catch((error) => {
+      console.error("Error creating post:", error.response?.data || error.message);
+      throw error;
+    });
+}
+

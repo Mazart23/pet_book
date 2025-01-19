@@ -5,6 +5,7 @@ import bcrypt
 from flask import request
 from flask_restx import Resource, fields, Namespace
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from werkzeug.exceptions import BadRequest
 
 from ..database.queries import Queries as db
 from ..utils.apps import Url
@@ -138,6 +139,34 @@ class Self(Resource):
         user_data['id'] = user_id
 
         return user_data, 200
+    
+    @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
+    @api.response(401, 'Unauthorized')
+    @jwt_required()
+    def put(self):
+        '''
+        Update self user data
+        '''
+        user_id = get_jwt_identity()
+        data = request.get_json()
+
+        queries = db()
+
+        valid_fields = {
+            'bio', 'email', 'location',
+            'is_private', 'phone'
+        }
+        if not all(field in valid_fields for field in data.keys()):
+            return {"message": "Invalid fields in request"}, 400
+
+        updated = queries.update_user_by_id(user_id, data)
+
+        if not updated:
+            log.error(f'Error updating data for {user_id}')
+            api.abort(400, "Update Failed")
+
+        return {"message": "User data updated successfully"}, 200
 
 
 @api.route('/login')
@@ -161,7 +190,40 @@ class Login(Resource):
         
         access_token = create_access_token(identity=str(user['_id']))
         return {'access_token': access_token}, 200
+    
+@api.route('/signup')
+class Signup(Resource):
+    @api.expect(user_model, validate=True)
+    @api.response(200, 'User created successfully')
+    @api.response(400, 'Bad Request')
+    @api.response(500, 'Internal Server Error')
+    def post(self):
+        """Sign up a new user"""
+        try:
+            data = request.get_json()
+            username = data.get('username')
+            email = data.get('email')
+            password = data.get('password')
+            phone = data.get('phone')
 
+            queries = db()
+
+            if queries.get_user_by_username(username):
+                raise BadRequest('Username already exists')
+
+            if queries.get_user_by_email(email):
+                raise BadRequest('Email already exists')
+
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            user_id = queries.create_user(username, email, hashed_password, phone)
+
+            return {'message': 'User created successfully', 'user_id': str(user_id)}, 200
+
+        except BadRequest as e:
+            return {'message': str(e)}, 400
+        except Exception as e:
+            log.error(f'Error during user creation: {e}')
+            return {'message': 'Failed to create user'}, 500
 
 @api.route('/password')
 class Password(Resource):

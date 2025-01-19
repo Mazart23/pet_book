@@ -11,6 +11,7 @@ import { deleteReaction, putReaction } from "@/app/Api";
 import { getColorFromUsername } from "@/app/layout";
 import { SiDatadog } from "react-icons/si";
 import ImageSlider from "../ImageSlider";
+import { ImageOff } from 'lucide-react';
 import useToken from "../contexts/TokenContext";
 import useUser from "../contexts/UserContext";
 
@@ -177,3 +178,4 @@ const Post = ({ post }: { post: Post }) => {
 };
 
 export default Post;
+

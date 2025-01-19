@@ -54,6 +54,17 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f'Error fetching user: {e}')
             return {}
+    
+    def update_user_by_id(self, id: str, updates: dict) -> bool:
+        try:
+            filter = {'_id': ObjectId(id)}
+            update = {'$set': updates}
+
+            result = self.update_one('users', filter, update)
+            return result.modified_count > 0
+        except Exception as e:
+            log.error(f'Error updating user: {e}')
+            return False
         
     def get_user_password_by_username(self, username: str) -> dict:
         try:
@@ -234,7 +245,28 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f'Error updating user: {e}')
             return False
-    
+            
+    def create_user(self, username: str, email: str, hashed_password: bytes, phone: str):
+        try:
+            user_data = {
+                'username': username,
+                'email': email,
+                'hashed_password': hashed_password,
+                'phone': phone,
+                'profile_picture_url': "",
+                'bio': "",
+                'scans': [],
+                'posts': [],
+                'location': "",
+                'is_premium': False,
+                'is_private': False,
+            }
+            result = self.insert_one('users', user_data)
+            return result.inserted_id
+        except Exception as e:
+            log.error(f'Error creating user: {e}')
+            return False
+
     @MongoDBConnect.transaction
     def insert_scan(self, user_id: str, ip: str, city: str, latitude: float, longitude: float, timestamp: datetime, session=None) -> str | bool:
         try:
@@ -615,4 +647,25 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f"Error fetching comments: {e}")
             return []
+    
+    def create_post(self, post_data: dict) -> str:
+        """
+        Create a new post in the database.
+        :param post_data: Dictionary containing post details
+        :return: ID of the newly created post
+        """
+        try:
+            result = self.insert_one('posts', post_data)
+            post_id = str(result.inserted_id)
+            update_result = self.update_one(
+                'users',  
+                {'_id': post_data.get("user_id")},  
+                {'$push': {'posts': ObjectId(post_id)}}  
+            )
+            if update_result.modified_count == 0:
+                log.warning(f"User document was not updated for user_id: {post_data.get("user_id")}")
+            return str(post_id)
+        except Exception as e:
+            log.error(f"Error creating a new post: {e}")
+            return None
 
