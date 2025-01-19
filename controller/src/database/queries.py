@@ -638,4 +638,25 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f"Error fetching comments: {e}")
             return []
+    
+    def create_post(self, post_data: dict) -> str:
+        """
+        Create a new post in the database.
+        :param post_data: Dictionary containing post details
+        :return: ID of the newly created post
+        """
+        try:
+            result = self.insert_one('posts', post_data)
+            post_id = str(result.inserted_id)
+            update_result = self.update_one(
+                'users',  
+                {'_id': post_data.get("user_id")},  
+                {'$push': {'posts': ObjectId(post_id)}}  
+            )
+            if update_result.modified_count == 0:
+                log.warning(f"User document was not updated for user_id: {post_data.get("user_id")}")
+            return str(post_id)
+        except Exception as e:
+            log.error(f"Error creating a new post: {e}")
+            return None
 

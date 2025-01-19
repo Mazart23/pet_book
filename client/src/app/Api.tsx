@@ -282,3 +282,21 @@ export async function fetchUserByUsername(username) {
       throw error;
     });
 }
+
+export async function createPost(token, formData: FormData) {
+  await servicesWait();
+
+  return apiClient
+    .put(`${services.controller.url}/post/`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then((response) => response.data)
+    .catch((error) => {
+      console.error("Error creating post:", error.response?.data || error.message);
+      throw error;
+    });
+}
+
