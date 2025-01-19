@@ -135,9 +135,11 @@ const Post = ({ post }: { post: Post }) => {
                 />
               )}
             </div>
-            <h4 className="mt-1 text-sm font-medium text-dark dark:text-white">
-              {user.username}
-            </h4>
+            {user?.username &&
+              <h4 className="mt-1 text-sm font-medium text-dark dark:text-white">
+                {user.username}
+              </h4>
+            }
           </div>
           <div className="mx-1 h-16 w-px bg-body-color dark:bg-white opacity-10"></div>
           <div className="flex flex-col items-center justify-center">

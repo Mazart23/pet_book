@@ -166,26 +166,26 @@ const Profile = () => {
               </p>
               <p className="text-sm text-body-color dark:text-gray-400">
                 <strong>Location: </strong>
-                {userData?.is_private && (!token || userData?.id !== jwtDecode(token).sub)
+                {userData?.is_private && (!token || userData?.id !== userSelf?.id)
                   ? "Private"
                   : userData?.location || "Location not provided."}
               </p>
               <p className="text-sm text-body-color dark:text-gray-400">
                 <strong>Email: </strong>
-                {userData?.is_private && (!token || userData?.id !== jwtDecode(token).sub)
+                {userData?.is_private && (!token || userData?.id !== userSelf?.id)
                   ? "Private"
                   : userData?.email || "Email not provided."}
               </p>
               <p className="text-sm text-body-color dark:text-gray-400">
                 <strong>Phone: </strong>
-                {userData?.is_private && (!token || userData?.id !== jwtDecode(token).sub)
+                {userData?.is_private && (!token || userData?.id !== userSelf?.id)
                   ? "Private"
                   : userData?.phone || "Phone number not provided."}
               </p>
             </div>
           )}
 
-          {!loadingUser && token && userData?.id === jwtDecode(token).sub && (
+          {!loadingUser && token && userData?.id === userSelf?.id && (
             <button
               onClick={() => setIsEditing(!isEditing)}
               className="mt-2 text-sm text-green-600 hover:text-green-500 dark:text-green-400 dark:hover:text-green-300"
