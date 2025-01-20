@@ -2,6 +2,7 @@ from bson.objectid import ObjectId
 from bson.binary import Binary
 import logging
 from datetime import datetime
+from bson.errors import InvalidId
 
 from . import MongoDBConnect
 
@@ -64,6 +65,26 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f'Error updating user: {e}')
             return False
+
+    def search_users_by_username(self, partial_username: str):
+        try:
+            filter = {
+                'username': {
+                    '$regex': f'^{partial_username}',
+                    '$options': 'i'
+                }
+            }
+            projection = {
+                '_id': False,
+                'username': True,
+                'profile_picture_url': True
+            }
+            users = list(self.db['users'].find(filter, projection))
+            return users
+        except Exception as e:
+            print(f'Error fetching users: {e}')
+            return []
+
         
     def get_user_password_by_username(self, username: str) -> dict:
         try:
@@ -217,6 +238,91 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f'Error fetching notifications: {e}')
             return False
+
+    def search_posts(self, search_term: str) -> list:
+        try:
+            query = {"description": {"$regex": search_term, "$options": "i"}}
+
+            pipeline = [
+                {"$match": query},
+                {"$sort": {"timestamp": -1}},
+                {
+                    "$lookup": {
+                        "from": "reactions",
+                        "localField": "_id",
+                        "foreignField": "post_id",
+                        "as": "reactions",
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "users",
+                        "localField": "user_id",
+                        "foreignField": "_id",
+                        "as": "user",
+                    }
+                },
+                {"$unwind": {"path": "$user", "preserveNullAndEmptyArrays": True}},
+                {
+                    "$project": {
+                        "id": {"$toString": "$_id"},
+                        "content": "$description",
+                        "images": "$images_urls",
+                        "user": {
+                            "id": {"$toString": "$user._id"},
+                            "username": "$user.username",
+                            "image": "$user.profile_picture_url",
+                        },
+                        "location": 1,
+                        "timestamp": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%dT%H:%M:%S.%LZ",
+                                "date": "$timestamp",
+                                "timezone": "UTC"
+                            }
+                        },
+                        "reactions": {
+                            "$map": {
+                                "input": "$reactions",
+                                "as": "reaction",
+                                "in": {
+                                    "id": {"$toString": "$$reaction._id"},
+                                    "user_id": {"$toString": "$$reaction.user_id"},
+                                    "reaction_type": "$$reaction.reaction_type",
+                                },
+                            }
+                        },
+                    }
+                },
+            ]
+
+            cursor = self.find_aggregate('posts', pipeline)
+
+            processed_results = []
+            for post in cursor:
+                try:
+                    processed_results.append({
+                        'id': post.get('id', ''),
+                        'content': post.get('content', ''),
+                        'images': post.get('images', []),
+                        'user': {
+                            'id': post.get('user', {}).get('id', ''),
+                            'username': post.get('user', {}).get('username', ''),
+                            'image': post.get('user', {}).get('image', '')
+                        },
+                        'location': post.get('location', ''),
+                        'timestamp': post.get('timestamp', ''),
+                        'reactions': post.get('reactions', [])
+                    })
+                except Exception as e:
+                    log.error(f"Error processing post: {e}")
+
+            return processed_results
+
+        except Exception as e:
+            log.error(f"Error searching posts: {e}")
+            return False
+
     
     def user_change_password(self, _id: ObjectId, hashed_password: bytes) -> bool:
         try:
