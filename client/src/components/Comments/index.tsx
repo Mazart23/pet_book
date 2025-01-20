@@ -85,7 +85,7 @@ const Comments = ({postId}: {postId: string}) => {
   };
 
   return (
-    <div className="relative h-full overflow-hidden my-8">
+    <div className="relative h-full overflow-hidden">
       <h3 className="sticky top-0 z-10 bg-white dark:bg-gray-dark border-b border-body-color border-opacity-10 px-8 py-4 text-lg font-semibold text-black dark:border-white dark:border-opacity-10 dark:text-white">
         Comments
       </h3>
