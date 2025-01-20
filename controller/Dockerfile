@@ -2,12 +2,15 @@ FROM python:3.12-slim
 
 WORKDIR /redirecter
 
-RUN apt-get update && \
-    apt-get install -y gcc default-libmysqlclient-dev && \
-    apt-get -q -y install --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    default-libmysqlclient-dev \
     build-essential \
     python3-dev \
-    pkg-config
+    pkg-config \
+    libjpeg-dev \
+    zlib1g-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN python -m pip install --upgrade pip
 
