@@ -146,7 +146,7 @@ const Post = ({ post }: { post: Post }) => {
             <h4 className="mb-1 text-sm font-small text-dark dark:text-white">
               Date
             </h4>
-            {timestamp.split(' ').map((t, i) => (
+            {timestamp && timestamp.split(' ').map((t, i) => (
               <p key={i} className="text-xs text-body-color">{t}</p>
             ))}
           </div>
