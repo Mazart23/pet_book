@@ -4,14 +4,15 @@ import {useState, useEffect} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Lottie from "react-lottie";
-import loaderAnimation from "@/static/animations/loader.json"
+import loaderAnimation from "@/static/animations/loader.json";
 import { Post } from "@/types/post";
-import { fetchProfilePicture, fetchReaction, deleteReaction, putReaction } from "@/app/Api";
+import { deleteReaction, putReaction } from "@/app/Api";
 import { getColorFromUsername } from "@/app/layout";
 import { SiDatadog } from "react-icons/si";
+import ImageSlider from "../ImageSlider";
+import { ImageOff } from 'lucide-react';
 import useToken from "../contexts/TokenContext";
 import useUser from "../contexts/UserContext";
-import jwtDecode from "jwt-decode";
 
 const reactionsArray = [
   {"type": "good", "text": "Good", "count": 0}, 
@@ -37,31 +38,14 @@ const updateReactionsCount = (reactions) => {
 const Post = ({ post }: { post: Post }) => {
   const { id, content, images, user, location, timestamp, reactions } = post;
   const [selectedReactionNum, setSelectedReactionNum] = useState<number | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null | undefined>(undefined);
   const [reactionsCounts, setReactionsCounts] = useState(reactionsArray);
-  const {token} = useToken();
-  const {currentUser} = useUser();
-
- 
+  const { token } = useToken();
+  const { userSelf } = useUser();
 
   useEffect(() => {
-    fetchProfilePicture(user.id)
-      .then((profileUrl) => {
-        if (profileUrl === "") {
-          setImageUrl(null);
-        } else {
-          setImageUrl(profileUrl);
-        }
-      })
-      .catch((error) => {
-        setImageUrl(null);
-      });
-  }, [user.id]);
-
-  useEffect(() => {
-    if(token){
-      const updatedReactions = updateReactionsCount(post.reactions); 
-      const userReactionType = reactions.find((reaction) => reaction.user_id === jwtDecode(token).sub)?.reaction_type;
+    if (token && reactions) {
+      const updatedReactions = updateReactionsCount(reactions); 
+      const userReactionType = reactions.find((reaction) => reaction.user_id === userSelf?.id)?.reaction_type;
 
       if (userReactionType) {
         const userReactionIndex = updatedReactions.findIndex((reaction) => reaction.type === userReactionType);
@@ -75,7 +59,7 @@ const Post = ({ post }: { post: Post }) => {
       }
 
       setReactionsCounts(updatedReactions);
-  }}, [post.reactions, user.id]);
+  }}, [token, reactions]);
 
   const changeReaction = (reactionNum) => {
     if (reactionNum === selectedReactionNum) {
@@ -89,8 +73,7 @@ const Post = ({ post }: { post: Post }) => {
 
   return (
     <div className="group relative overflow-hidden rounded-sm bg-white shadow-one duration-300 hover:shadow-two dark:bg-dark dark:hover:shadow-gray-dark">
-      <Link
-        href="/blog-details"
+      <div
         className="relative block aspect-[37/22] w-full"
       >
         {/* Green Tag */}
@@ -99,8 +82,17 @@ const Post = ({ post }: { post: Post }) => {
             {location}
           </span>
         }
-        <Image src={images[0]} alt="image" fill />
-      </Link>
+        {images && images.length > 0 ? (
+          <ImageSlider images={images}/>
+        ) : (
+          <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div className="text-center">
+              <ImageOff className="w-12 h-12 mx-auto mb-2 text-gray-400 dark:text-gray-600" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">No image attached</p>
+            </div>
+          </div>
+        )}
+      </div>
       <div className="p-6 sm:p-8 md:px-6 md:py-8 lg:p-8 xl:px-5 xl:py-8 2xl:p-8">
         <p className="mb-6 border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
           {content}
@@ -114,7 +106,7 @@ const Post = ({ post }: { post: Post }) => {
         <div className="flex items-center justify-around mt-1">
           <div className="flex flex-col items-center justify-center">
             <div className="relative h-10 w-10">
-              {imageUrl === undefined ? (
+              {user === undefined ? (
                 <Lottie 
                   options={{
                     loop: true,
@@ -127,9 +119,9 @@ const Post = ({ post }: { post: Post }) => {
                   height={40} 
                   width={40} 
                 />
-              ) : imageUrl ? (
+              ) : user?.image ? (
                 <Image
-                  src={imageUrl}
+                  src={user.image}
                   fill
                   alt="User profile picture"
                   className="h-full w-full rounded-full object-cover transition-all duration-300 ease-in-out hover:scale-110 cursor-pointer border-2 border-solid border-indigo-900 shadow-md hover:shadow-lg shadow-indigo-900"
@@ -143,17 +135,19 @@ const Post = ({ post }: { post: Post }) => {
                 />
               )}
             </div>
-            <h4 className="mt-1 text-sm font-medium text-dark dark:text-white">
-              {user.username}
-            </h4>
+            {user?.username &&
+              <h4 className="mt-1 text-sm font-medium text-dark dark:text-white">
+                {user.username}
+              </h4>
+            }
           </div>
           <div className="mx-1 h-16 w-px bg-body-color dark:bg-white opacity-10"></div>
           <div className="flex flex-col items-center justify-center">
             <h4 className="mb-1 text-sm font-small text-dark dark:text-white">
               Date
             </h4>
-            {timestamp.split(' ').map((t) => (
-              <p className="text-xs text-body-color">{t}</p>
+            {timestamp && timestamp.split(' ').map((t, i) => (
+              <p key={i} className="text-xs text-body-color">{t}</p>
             ))}
           </div>
           <div className="mx-1 h-16 w-px bg-body-color dark:bg-white opacity-10"></div>
@@ -185,3 +179,4 @@ const Post = ({ post }: { post: Post }) => {
 };
 
 export default Post;
+

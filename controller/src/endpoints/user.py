@@ -17,16 +17,6 @@ log = logging.getLogger('USER')
 api = Namespace('user')
 
 
-auth_parser = api.parser()
-auth_parser.add_argument(
-    'Authorization', 
-    location='headers', 
-    required=True, 
-    help='Bearer token for authentication',
-    type=str,
-    default='Bearer ',
-)
-
 status_model = api.model(
     'Status model',
     {
@@ -146,6 +136,8 @@ class Self(Resource):
             log.error(f'Error fetching data for {user_id}')
             api.abort(404, "User Not Found")
         
+        user_data['id'] = user_id
+
         return user_data, 200
     
     @api.response(200, 'OK')
@@ -175,28 +167,6 @@ class Self(Resource):
             api.abort(400, "Update Failed")
 
         return {"message": "User data updated successfully"}, 200
-
-# TESTOWANIE BAZY
-@api.route('/user-data')
-class UserData(Resource):
-    @api.doc(params={'id': {'description': 'User Identifier', 'example': '671f880f5bf26ed4c9f540fd', 'required': True}})
-    @api.marshal_with(user_model, code=200, as_list=True)
-    @api.response(404, 'User not found')
-    def get(self):
-        user_id = request.args.get('id')
-
-        queries = db()
-        
-        user = queries.get_user_by_id(user_id)
-
-        if not user:
-            api.abort(404, "User not found.")
-        
-        ret_dict = {
-            '_id': user['_id'],
-            'username': user['username']
-        }
-        return ret_dict, 200
 
 
 @api.route('/login')

@@ -23,8 +23,8 @@ export const UserProvider = ({ children }) => {
   }, [token, socket]);
 
   const contextValue = {
-    user,
-    setUser
+    userSelf: user,
+    setUserSelf: setUser
   };
 
   return (

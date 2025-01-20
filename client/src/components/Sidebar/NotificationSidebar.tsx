@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Lottie from "react-lottie";
-import catAnimation from "@/static/animations/cat.json"
+import catAnimation from "@/static/animations/cat.json";
 import Notification from "./Notification";
 import { getNotifications, deleteNotification } from "@/app/Api";
 import useToken from "../contexts/TokenContext";
@@ -25,8 +25,7 @@ const NotificationSidebar = () => {
       getNotifications(token, lastTimestamp).then((data) => {
         if (data.length !== 0) {
           setNotifications((prevNotifications) => prevNotifications.concat(data));
-          const newLastTimestamp = data.at(-1).timestamp;
-          setLastTimestamp(newLastTimestamp);
+          setLastTimestamp(data.at(-1).timestamp);
         } 
         if (data.length < 3) {
           setIsAllLoaded(true);

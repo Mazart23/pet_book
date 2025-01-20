@@ -109,7 +109,6 @@ export async function getNotifications(token, lastTimestamp=null) {
       },
     })
     .then((response) => {
-      console.log(response);
       if (response.status === 200) {
         return response.data;
       } else return null;
@@ -152,7 +151,6 @@ export async function fetchReactions(token, post_id, lastTimestamp=null) {
       },
     })
     .then((response) => {
-      console.log(response);
       if (response.status === 200) {
         return response.data;
       } else return null;
@@ -175,7 +173,6 @@ export async function fetchReaction(token, post_id) {
       },
     })
     .then((response) => {
-      console.log(response);
       if (response.status === 200) {
         return response.data;
       } else return null;
@@ -240,22 +237,82 @@ export async function fetchPosts(user_id = null, last_timestamp = null, limit = 
   }
 }
 
-export async function fetchComments(post_id = null, last_timestamp = null, limit = 10) {
+export async function getPost(token, postId) {
   await servicesWait();
 
-  const params = {
-    limit,
-    ...(post_id && { post_id }),
-    ...(last_timestamp && { last_timestamp }),
-  };
+  return apiClient
+    .get(`${services.controller.url}/post/single`, { 
+      params: { 
+        id: postId 
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then((response) => response.data)
+    .catch((error) => {
+      throw error;
+    });
+}
 
-  try {
-    const response = await apiClient.get(`${services.controller.url}/post/comments`, { params });
-    return response.data.posts;
-  } catch (error) {
-    console.error("Error fetching posts:", error.response?.data || error.message);
-    throw error;
+export async function getComments(token, post_id = null, last_timestamp = null, limit = 5) {
+  await servicesWait();
+  return apiClient
+    .get(`${services.controller.url}/comment/`, { 
+      params: {
+        post_id: post_id,
+        limit: limit,
+        last_timestamp: last_timestamp,
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }, 
+    })
+    .then((response) => {
+      return response.data.comments;
+    })
+    .catch((error) => {
+      console.error("Error fetching comments:", error.response?.data || error.message);
+      throw error;
+    });
+}
+
+
+export async function deleteComment(token, id) {
+  await servicesWait();
+  return apiClient
+    .delete(`${services.controller.url}/comment/`, {
+      data: {
+        comment_id: id
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .catch((error) => {
+      console.log(error);
+      throw error;
+    });
+}
+
+export async function putComment(token, content, post_id) {
+  await servicesWait();
+  const data = {
+    post_id: post_id,
+    content: content
   }
+
+  return apiClient
+    .put(`${services.controller.url}/comment/`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    })
+    .then((response) => response.data)
+    .catch((error) => {
+      console.log(error);
+      throw error;
+    });
 }
 
 export async function updateUserInfo(token, updatedData) {
@@ -293,6 +350,23 @@ export async function searchRequestedResults(query: string, type: string) {
       return response.data;
     })
     .catch((error) => {
+      throw error;
+    });
+}
+
+export async function createPost(token, formData: FormData) {
+  await servicesWait();
+
+  return apiClient
+    .put(`${services.controller.url}/post/`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then((response) => response.data)
+    .catch((error) => {
+      console.error("Error creating post:", error.response?.data || error.message);
       throw error;
     });
 }
