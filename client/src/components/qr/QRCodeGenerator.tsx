@@ -35,29 +35,43 @@ const QRCodeGenerator = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
+
       <h1 className="text-3xl font-bold text-center mb-10">Your QR Code</h1>
 
-      <div className="flex flex-col items-center">
-        {loading && <p>Loading...</p>}
+      <div className="bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center">
+
+      {loading && (
+            <div className="w-48 h-48 mb-4 border border-gray-600 rounded-lg flex items-center justify-center">
+              <p className="text-gray-500">Generating...</p>
+            </div>
+          )}
+
 
         {qrCode && (
           <div className="mt-6 flex flex-col items-center">
             <img
               src={`data:image/png;base64,${qrCode}`}
               alt="Generated QR Code"
-              className="w-48 h-48 border border-gray-300 rounded-md"
+              className="w-48 h-48 mb-4 border border-gray-600 rounded-lg"
             />
+
             <button
               onClick={downloadQRCode}
               className="mt-4 px-6 py-2 bg-blue-500 text-white font-bold rounded hover:bg-blue-600 transition"
             >
               Download QR Code
             </button>
+
           </div>
         )}
 
-        {error && <p className="mt-6 text-red-500">{error}</p>}
+        {error && (
+          <p className="mt-6 text-red-500 bg-gray-800 px-4 py-2 rounded">
+            {error}
+          </p>
+        )}
+
       </div>
     </div>
   );
