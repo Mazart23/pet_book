@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from bson.errors import InvalidId
 
 from bson.objectid import ObjectId
 from bson.binary import Binary
@@ -65,6 +66,26 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f'Error updating user: {e}')
             return False
+
+    def search_users_by_username(self, partial_username: str):
+        try:
+            filter = {
+                'username': {
+                    '$regex': f'^{partial_username}',
+                    '$options': 'i'
+                }
+            }
+            projection = {
+                '_id': False,
+                'username': True,
+                'profile_picture_url': True
+            }
+            users = list(self.db['users'].find(filter, projection))
+            return users
+        except Exception as e:
+            print(f'Error fetching users: {e}')
+            return []
+
         
     def get_user_password_by_username(self, username: str) -> dict:
         try:
@@ -226,6 +247,91 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f'Error fetching notifications: {e}')
             return False
+
+    def search_posts(self, search_term: str) -> list:
+        try:
+            query = {"description": {"$regex": search_term, "$options": "i"}}
+
+            pipeline = [
+                {"$match": query},
+                {"$sort": {"timestamp": -1}},
+                {
+                    "$lookup": {
+                        "from": "reactions",
+                        "localField": "_id",
+                        "foreignField": "post_id",
+                        "as": "reactions",
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "users",
+                        "localField": "user_id",
+                        "foreignField": "_id",
+                        "as": "user",
+                    }
+                },
+                {"$unwind": {"path": "$user", "preserveNullAndEmptyArrays": True}},
+                {
+                    "$project": {
+                        "id": {"$toString": "$_id"},
+                        "content": "$description",
+                        "images": "$images_urls",
+                        "user": {
+                            "id": {"$toString": "$user._id"},
+                            "username": "$user.username",
+                            "image": "$user.profile_picture_url",
+                        },
+                        "location": 1,
+                        "timestamp": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%dT%H:%M:%S.%LZ",
+                                "date": "$timestamp",
+                                "timezone": "UTC"
+                            }
+                        },
+                        "reactions": {
+                            "$map": {
+                                "input": "$reactions",
+                                "as": "reaction",
+                                "in": {
+                                    "id": {"$toString": "$$reaction._id"},
+                                    "user_id": {"$toString": "$$reaction.user_id"},
+                                    "reaction_type": "$$reaction.reaction_type",
+                                },
+                            }
+                        },
+                    }
+                },
+            ]
+
+            cursor = self.find_aggregate('posts', pipeline)
+
+            processed_results = []
+            for post in cursor:
+                try:
+                    processed_results.append({
+                        'id': post.get('id', ''),
+                        'content': post.get('content', ''),
+                        'images': post.get('images', []),
+                        'user': {
+                            'id': post.get('user', {}).get('id', ''),
+                            'username': post.get('user', {}).get('username', ''),
+                            'image': post.get('user', {}).get('image', '')
+                        },
+                        'location': post.get('location', ''),
+                        'timestamp': post.get('timestamp', ''),
+                        'reactions': post.get('reactions', [])
+                    })
+                except Exception as e:
+                    log.error(f"Error processing post: {e}")
+
+            return processed_results
+
+        except Exception as e:
+            log.error(f"Error searching posts: {e}")
+            return False
+
     
     def user_change_password(self, _id: ObjectId, hashed_password: bytes) -> bool:
         try:
@@ -668,4 +774,35 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f"Error creating a new post: {e}")
             return None
+        
+    def delete_post(self, post_id: str, user_id: str) -> bool:
+        try:
+            # Delete the post
+            delete_result = self.delete_one('posts', {'_id': ObjectId(post_id)})
+            if delete_result.deleted_count == 0:
+                log.info(f"No post found with id {post_id} to delete")
+                return False
+
+            # Remove the post reference from the user's posts array
+            update_result = self.update_one(
+                'users',
+                {'_id': ObjectId(user_id)},
+                {'$pull': {'posts': ObjectId(post_id)}}
+            )
+
+            # Delete all reactions associated with the post
+            reactions_delete_result = self.delete_many('reactions', {'post_id': ObjectId(post_id)})
+            log.info(f"Deleted {reactions_delete_result.deleted_count} reactions for post {post_id}")
+
+            # Delete all comments associated with the post
+            comments_delete_result = self.delete_many('comments', {'post_id': ObjectId(post_id)})
+            log.info(f"Deleted {comments_delete_result.deleted_count} comments for post {post_id}")
+
+            # Return true if the post and related data were successfully deleted
+            return update_result.modified_count > 0
+
+        except Exception as e:
+            log.error(f"Error deleting post: {e}")
+            return False
+
 

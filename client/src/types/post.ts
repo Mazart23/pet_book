@@ -9,6 +9,5 @@ export type Post = {
   user: User;
   location: string;
   timestamp: string;
-  comments: Array<Comment>;
   reactions: Array<Reaction>;
 };

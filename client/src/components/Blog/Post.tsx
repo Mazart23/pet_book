@@ -35,7 +35,7 @@ const updateReactionsCount = (reactions) => {
   }));
 };
 
-const Post = ({ post }: { post: Post }) => {
+const Post = ({ post, index, handleAnimations }: { post: Post, index: Number, handleAnimations: CallableFunction }) => {
   const { id, content, images, user, location, timestamp, reactions } = post;
   const [selectedReactionNum, setSelectedReactionNum] = useState<number | null>(null);
   const [reactionsCounts, setReactionsCounts] = useState(reactionsArray);
@@ -71,6 +71,12 @@ const Post = ({ post }: { post: Post }) => {
     }
   }
 
+  const onArrowClick = () => {
+    setTimeout(() => {
+      handleAnimations(index);
+    }, 500); 
+  };
+
   return (
     <div className="group relative overflow-hidden rounded-sm bg-white shadow-one duration-300 hover:shadow-two dark:bg-dark dark:hover:shadow-gray-dark">
       <div
@@ -83,7 +89,7 @@ const Post = ({ post }: { post: Post }) => {
           </span>
         }
         {images && images.length > 0 ? (
-          <ImageSlider images={images}/>
+          <ImageSlider images={images} onArrowClick={onArrowClick}/>
         ) : (
           <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
             <div className="text-center">
@@ -146,7 +152,7 @@ const Post = ({ post }: { post: Post }) => {
             <h4 className="mb-1 text-sm font-small text-dark dark:text-white">
               Date
             </h4>
-            {timestamp.split(' ').map((t, i) => (
+            {timestamp && timestamp.split(' ').map((t, i) => (
               <p key={i} className="text-xs text-body-color">{t}</p>
             ))}
           </div>

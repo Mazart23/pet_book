@@ -96,6 +96,7 @@ class Post(Resource):
 
 
     @jwt_required()
+    @api.marshal_with(post_model, code=201)
     @api.response(201, "Post created successfully")
     @api.response(400, "Invalid data provided")
     @api.response(500, "Failed to create post")
@@ -158,7 +159,19 @@ class Post(Resource):
                 return {"message": "Failed to create post."}, 500
 
             log.info(f"Post created successfully with ID: {post_id}")
-            return {"message": "Post created successfully", "post_id": str(post_id), "images": image_urls}, 201
+            return {
+                "id": str(post_id),
+                "content": content,
+                "images": image_urls,
+                "user": {
+                    "id": user_id,
+                    "username": user.get("username"),
+                    "image": user.get("image"),
+                },
+                "location": location,
+                "timestamp": datetime.utcnow().isoformat(),
+                "reactions": [],
+            }, 201
 
         except Exception as e:
             log.error(f"Error in PUT /posts: {e}")
@@ -169,10 +182,34 @@ class Post(Resource):
         edit
         '''
 
+    @jwt_required()
+    @api.response(200, "Post deleted successfully")
+    @api.response(404, "Post not found")
+    @api.response(403, "Unauthorized to delete this post")
+    @api.response(500, "Failed to delete post")
     def delete(self):
-        '''
-        delete
-        '''
+        """
+        Delete a post along with its associated comments and reactions
+        """
+        user_id = get_jwt_identity()  # Get the ID of the logged-in user
+        queries = db()  # Database queries instance
+
+        try:
+            post_id = request.json.get('id')
+            if not post_id:
+                return {"message": "'id' is a required query parameter."}, 400
+
+            post_deleted = queries.delete_post(post_id, user_id)
+            if not post_deleted:
+                return {"message": "Failed to delete the post."}, 500
+
+            log.info(f"Post with ID {post_id} deleted successfully.")
+            return {"message": "Post deleted successfully."}, 200
+
+        except Exception as e:
+            log.error(f"Error in DELETE /posts: {e}")
+            return {"message": "An unexpected error occurred."}, 500
+
 
 @api.route('/single')
 class SinglePost(Resource):
@@ -207,3 +244,64 @@ class SinglePost(Resource):
         except Exception as e:
             log.error(f"Error: {e}")
             return {"message": "Failed to fetch post"}, 500
+        
+
+@api.route('/search')
+class Search(Resource):
+    search_model = api.model(
+        'Search model',
+        {
+            'username': fields.String(description="Partial or full username", example="Fra"),
+            'content': fields.String(description="Search content", example="bio text or other"),
+        }
+    )
+
+    @api.doc(params={
+        'query': {'description': 'Search query string (username or content)', 'example': 'Fra', 'required': True},
+        'type': {'description': 'Search type: username or content', 'example': 'username', 'required': True},
+    })
+    @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
+    @api.response(404, 'No results found')
+    @api.response(500, 'Internal Server Error')
+    def get(self):
+        """
+        Search for users by username or content.
+        """
+        try:
+            query = request.args.get('query')
+            search_type = request.args.get('type')
+
+            if not query or not search_type:
+                log.error("Missing required query or type parameters.")
+                return {"message": "Bad Request: query and type are required parameters."}, 400
+
+            log.info(f"Search request received with query: {query}, type: {search_type}")
+
+            queries = db()
+
+            if search_type.lower() == 'username':
+                results = queries.search_users_by_username(query) or []
+                if not results:
+                    log.info(f"No results found for username: {query}")
+                    return {"message": "No results found for username."}, 404
+                log.info(f"Found {len(results)} users for query: {query}")
+                return {"users": results}, 200
+
+            elif search_type.lower() == 'content':
+                results = queries.search_posts(search_term=query) or []
+                if not results:
+                    log.info(f"No results found for content: {query}")
+                    return {"message": "No results found for content."}, 404
+
+                log.info(f"Found {len(results)} posts for query: {query}")
+                return {"posts": results}, 200
+
+            else:
+                log.error(f"Invalid search type: {search_type}")
+                return {"message": "Bad Request: type must be 'username' or 'content'."}, 400
+
+        except Exception as e:
+            log.error(f"Error in GET /search: {e}")
+            api.abort(500, "An unexpected error occurred while processing your request.")
+
