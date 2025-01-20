@@ -96,6 +96,7 @@ class Post(Resource):
 
 
     @jwt_required()
+    @api.marshal_with(post_model, code=201)
     @api.response(201, "Post created successfully")
     @api.response(400, "Invalid data provided")
     @api.response(500, "Failed to create post")
@@ -158,7 +159,19 @@ class Post(Resource):
                 return {"message": "Failed to create post."}, 500
 
             log.info(f"Post created successfully with ID: {post_id}")
-            return {"message": "Post created successfully", "post_id": str(post_id), "images": image_urls}, 201
+            return {
+                "id": str(post_id),
+                "content": content,
+                "images": image_urls,
+                "user": {
+                    "id": user_id,
+                    "username": user.get("username"),
+                    "image": user.get("image"),
+                },
+                "location": location,
+                "timestamp": datetime.utcnow().isoformat(),
+                "reactions": [],
+            }, 201
 
         except Exception as e:
             log.error(f"Error in PUT /posts: {e}")
