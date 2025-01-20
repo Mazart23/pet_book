@@ -2,28 +2,32 @@
 
 import React, { useEffect, useState } from "react";
 import { getGeneratedQr } from "@/app/Api";
+import useToken from "../contexts/TokenContext";
 
 const QRCodeGenerator = () => {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { token } = useToken();
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    if (token) {
+      setLoading(true);
+      setError(null);
 
-    getGeneratedQr("")
-      .then((qr) => {
-        setQrCode(qr);
-      })
-      .catch((err) => {
-        setError("Failed to generate QR code. Please try again.");
-        console.error(err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []); // Efekt wywoływany tylko raz przy ładowaniu komponentu
+      getGeneratedQr(token)
+        .then((qr) => {
+          setQrCode(qr);
+        })
+        .catch((err) => {
+          setError("Failed to generate QR code. Please try again.");
+          console.error(err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [token]);
 
   const downloadQRCode = () => {
     if (!qrCode) return;
