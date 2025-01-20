@@ -72,10 +72,11 @@ const Post = ({ post, index, handleAnimations }: { post: Post, index: Number, ha
   }
 
   const onArrowClick = () => {
-    if (index && handleAnimations)
-    setTimeout(() => {
-      handleAnimations(index);
-    }, 500); 
+    if (index && handleAnimations) {
+      setTimeout(() => {
+        handleAnimations(index);
+      }, 500); 
+    }
   };
 
   return (
