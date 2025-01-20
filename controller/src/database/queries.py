@@ -774,4 +774,35 @@ class Queries(MongoDBConnect):
         except Exception as e:
             log.error(f"Error creating a new post: {e}")
             return None
+        
+    def delete_post(self, post_id: str, user_id: str) -> bool:
+        try:
+            # Delete the post
+            delete_result = self.delete_one('posts', {'_id': ObjectId(post_id)})
+            if delete_result.deleted_count == 0:
+                log.info(f"No post found with id {post_id} to delete")
+                return False
+
+            # Remove the post reference from the user's posts array
+            update_result = self.update_one(
+                'users',
+                {'_id': ObjectId(user_id)},
+                {'$pull': {'posts': ObjectId(post_id)}}
+            )
+
+            # Delete all reactions associated with the post
+            reactions_delete_result = self.delete_many('reactions', {'post_id': ObjectId(post_id)})
+            log.info(f"Deleted {reactions_delete_result.deleted_count} reactions for post {post_id}")
+
+            # Delete all comments associated with the post
+            comments_delete_result = self.delete_many('comments', {'post_id': ObjectId(post_id)})
+            log.info(f"Deleted {comments_delete_result.deleted_count} comments for post {post_id}")
+
+            # Return true if the post and related data were successfully deleted
+            return update_result.modified_count > 0
+
+        except Exception as e:
+            log.error(f"Error deleting post: {e}")
+            return False
+
 

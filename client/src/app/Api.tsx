@@ -370,3 +370,20 @@ export async function createPost(token, formData: FormData) {
       throw error;
     });
 }
+
+export async function deletePost(token, id) {
+  await servicesWait();
+  return apiClient
+    .delete(`${services.controller.url}/post/`, {
+      data: {
+        id: id
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .catch((error) => {
+      console.log(error);
+      throw error;
+    });
+}

@@ -75,4 +75,8 @@ class MongoDBConnect:
     def find_aggregate(self, collection_name: str, pipeline: list[dict]) -> list[dict]:
         collection = self.get_collection(collection_name)        
         return list(collection.aggregate(pipeline))
+    def delete_many(self, collection_name: str, query: dict):
+        collection = self.db[collection_name]  
+        delete_result = collection.delete_many(query)  
+        return delete_result
     

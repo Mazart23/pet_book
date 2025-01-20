@@ -96,6 +96,7 @@ class Post(Resource):
 
 
     @jwt_required()
+    @api.marshal_with(post_model, code=201)
     @api.response(201, "Post created successfully")
     @api.response(400, "Invalid data provided")
     @api.response(500, "Failed to create post")
@@ -158,7 +159,19 @@ class Post(Resource):
                 return {"message": "Failed to create post."}, 500
 
             log.info(f"Post created successfully with ID: {post_id}")
-            return {"message": "Post created successfully", "post_id": str(post_id), "images": image_urls}, 201
+            return {
+                "id": str(post_id),
+                "content": content,
+                "images": image_urls,
+                "user": {
+                    "id": user_id,
+                    "username": user.get("username"),
+                    "image": user.get("image"),
+                },
+                "location": location,
+                "timestamp": datetime.utcnow().isoformat(),
+                "reactions": [],
+            }, 201
 
         except Exception as e:
             log.error(f"Error in PUT /posts: {e}")
@@ -169,10 +182,34 @@ class Post(Resource):
         edit
         '''
 
+    @jwt_required()
+    @api.response(200, "Post deleted successfully")
+    @api.response(404, "Post not found")
+    @api.response(403, "Unauthorized to delete this post")
+    @api.response(500, "Failed to delete post")
     def delete(self):
-        '''
-        delete
-        '''
+        """
+        Delete a post along with its associated comments and reactions
+        """
+        user_id = get_jwt_identity()  # Get the ID of the logged-in user
+        queries = db()  # Database queries instance
+
+        try:
+            post_id = request.json.get('id')
+            if not post_id:
+                return {"message": "'id' is a required query parameter."}, 400
+
+            post_deleted = queries.delete_post(post_id, user_id)
+            if not post_deleted:
+                return {"message": "Failed to delete the post."}, 500
+
+            log.info(f"Post with ID {post_id} deleted successfully.")
+            return {"message": "Post deleted successfully."}, 200
+
+        except Exception as e:
+            log.error(f"Error in DELETE /posts: {e}")
+            return {"message": "An unexpected error occurred."}, 500
+
 
 @api.route('/single')
 class SinglePost(Resource):
