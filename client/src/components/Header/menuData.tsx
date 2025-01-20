@@ -4,19 +4,19 @@ import { BsSearchHeartFill } from "react-icons/bs";
 
 const menuData: Menu[] = [
   {
-    id: 1,
+    id: 0,
     title: <FaHome size={26}/>,
     path: "/",
     newTab: false,
   },
   {
-    id: 2,
+    id: 1,
     title: <FaQrcode size={26}/>,
     path: "/qr",
     newTab: false,
   },
   {
-    id: 33,
+    id: 2,
     title: <BsSearchHeartFill size={26}/>,
     path: "/search",
     newTab: false,
@@ -26,43 +26,6 @@ const menuData: Menu[] = [
     title: <FaInfoCircle size={26}/>,
     path: "/about",
     newTab: false,
-  },
-  {
-    id: 4,
-    title: "Pages",
-    newTab: false,
-    submenu: [
-      {
-        id: 41,
-        title: "About Page",
-        path: "/about",
-        newTab: false,
-      },
-      {
-        id: 43,
-        title: "Blog Grid Page",
-        path: "/blog",
-        newTab: false,
-      },
-      {
-        id: 44,
-        title: "Blog Sidebar Page",
-        path: "/blog-sidebar",
-        newTab: false,
-      },
-      {
-        id: 45,
-        title: "Blog Details Page",
-        path: "/blog-details",
-        newTab: false,
-      },
-      {
-        id: 48,
-        title: "Error Page",
-        path: "/error",
-        newTab: false,
-      },
-    ],
   },
 ];
 export default menuData;
