@@ -2,7 +2,7 @@ import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/css/image-gallery.css";
 import { RiArrowLeftWideLine, RiArrowRightWideLine  } from "react-icons/ri";
 
-export default function ImageSlider({ images }) {
+export default function ImageSlider({ images, onArrowClick }) {
   const galleryImages = images.map((img) => ({
     original: img,
     thumbnail: img,
@@ -15,7 +15,12 @@ export default function ImageSlider({ images }) {
           ? "opacity-50 cursor-not-allowed"
           : "hover:text-green-600 text-gray-300 hover:-translate-x-1 hover:scale-125"
       }`}
-      onClick={onClick}
+      onClick={(e) => {
+        if (!disabled) {
+          onArrowClick();
+          onClick(e);
+        }
+      }}
       disabled={disabled}
     >
       <RiArrowLeftWideLine size={32} />
@@ -29,7 +34,12 @@ export default function ImageSlider({ images }) {
           ? "opacity-50 cursor-not-allowed"
           : "hover:text-green-600 text-gray-300 hover:translate-x-1 hover:scale-125"
       }`}
-      onClick={onClick}
+      onClick={(e) => {
+        if (!disabled) {
+          onArrowClick();
+          onClick(e);
+        }
+      }}
       disabled={disabled}
     >
       <RiArrowRightWideLine size={32} />
