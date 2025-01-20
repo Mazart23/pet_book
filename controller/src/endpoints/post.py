@@ -182,10 +182,34 @@ class Post(Resource):
         edit
         '''
 
+    @jwt_required()
+    @api.response(200, "Post deleted successfully")
+    @api.response(404, "Post not found")
+    @api.response(403, "Unauthorized to delete this post")
+    @api.response(500, "Failed to delete post")
     def delete(self):
-        '''
-        delete
-        '''
+        """
+        Delete a post along with its associated comments and reactions
+        """
+        user_id = get_jwt_identity()  # Get the ID of the logged-in user
+        queries = db()  # Database queries instance
+
+        try:
+            post_id = request.json.get('id')
+            if not post_id:
+                return {"message": "'id' is a required query parameter."}, 400
+
+            post_deleted = queries.delete_post(post_id, user_id)
+            if not post_deleted:
+                return {"message": "Failed to delete the post."}, 500
+
+            log.info(f"Post with ID {post_id} deleted successfully.")
+            return {"message": "Post deleted successfully."}, 200
+
+        except Exception as e:
+            log.error(f"Error in DELETE /posts: {e}")
+            return {"message": "An unexpected error occurred."}, 500
+
 
 @api.route('/single')
 class SinglePost(Resource):
