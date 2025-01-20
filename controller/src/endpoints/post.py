@@ -207,3 +207,64 @@ class SinglePost(Resource):
         except Exception as e:
             log.error(f"Error: {e}")
             return {"message": "Failed to fetch post"}, 500
+        
+
+@api.route('/search')
+class Search(Resource):
+    search_model = api.model(
+        'Search model',
+        {
+            'username': fields.String(description="Partial or full username", example="Fra"),
+            'content': fields.String(description="Search content", example="bio text or other"),
+        }
+    )
+
+    @api.doc(params={
+        'query': {'description': 'Search query string (username or content)', 'example': 'Fra', 'required': True},
+        'type': {'description': 'Search type: username or content', 'example': 'username', 'required': True},
+    })
+    @api.response(200, 'OK')
+    @api.response(400, 'Bad Request')
+    @api.response(404, 'No results found')
+    @api.response(500, 'Internal Server Error')
+    def get(self):
+        """
+        Search for users by username or content.
+        """
+        try:
+            query = request.args.get('query')
+            search_type = request.args.get('type')
+
+            if not query or not search_type:
+                log.error("Missing required query or type parameters.")
+                return {"message": "Bad Request: query and type are required parameters."}, 400
+
+            log.info(f"Search request received with query: {query}, type: {search_type}")
+
+            queries = db()
+
+            if search_type.lower() == 'username':
+                results = queries.search_users_by_username(query) or []
+                if not results:
+                    log.info(f"No results found for username: {query}")
+                    return {"message": "No results found for username."}, 404
+                log.info(f"Found {len(results)} users for query: {query}")
+                return {"users": results}, 200
+
+            elif search_type.lower() == 'content':
+                results = queries.search_posts(search_term=query) or []
+                if not results:
+                    log.info(f"No results found for content: {query}")
+                    return {"message": "No results found for content."}, 404
+
+                log.info(f"Found {len(results)} posts for query: {query}")
+                return {"posts": results}, 200
+
+            else:
+                log.error(f"Invalid search type: {search_type}")
+                return {"message": "Bad Request: type must be 'username' or 'content'."}, 400
+
+        except Exception as e:
+            log.error(f"Error in GET /search: {e}")
+            api.abort(500, "An unexpected error occurred while processing your request.")
+
