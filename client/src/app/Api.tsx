@@ -357,3 +357,35 @@ export async function createPost(token, formData: FormData) {
     });
 }
 
+export async function getGeneratedQr(token?: string) {
+  await servicesWait();
+  return apiClient
+    .get(`${services.controller.url}/qr/generator`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    .then((response) => response.data.qr)
+    .catch((error) => {
+      console.error("Error fetching QR code:", error.response?.data || error.message);
+      throw error;
+    });
+}
+
+
+/**
+ * Wysyła dane zeskanowanego QR code do backendu
+ */
+export async function scanQr(token: string, scanData: Record<string, any>) {
+  await servicesWait();
+  return apiClient
+    .post(`${services.controller.url}/qr/scan`, scanData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then((response) => response.data)
+    .catch((error) => {
+      console.error("Error scanning QR code:", error.response?.data || error.message);
+      throw error;
+    });
+}
+

@@ -114,5 +114,4 @@ class Generator(Resource):
             # Logowanie błędu i zwrócenie odpowiedzi 500
             log.error(f"Error generating QR code: {e}")
             api.abort(500, 'Internal Server Error')
-Footer
   
