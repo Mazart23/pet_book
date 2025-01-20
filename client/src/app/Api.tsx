@@ -371,6 +371,19 @@ export async function createPost(token, formData: FormData) {
     });
 }
 
+export async function getGeneratedQr(token?: string) {
+  await servicesWait();
+  return apiClient
+    .get(`${services.controller.url}/qr/generator`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    .then((response) => response.data.qr)
+    .catch((error) => {
+      console.error("Error fetching QR code:", error.response?.data || error.message);
+      throw error;
+    });
+}
+
 export async function deletePost(token, id) {
   await servicesWait();
   return apiClient

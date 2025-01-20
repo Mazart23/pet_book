@@ -1,6 +1,10 @@
 import logging
-from datetime import datetime
+import datetime
+import qrcode 
+import base64
 
+from io import BytesIO
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import request
 from flask_restx import Resource, fields, Namespace
 
@@ -27,6 +31,12 @@ scan_input_model = api.model(
     'Scan input model', {
         'user_id': fields.String(required=True, description='Unique ID of the user'),
         'data': fields.Nested(guest_model, required=True, description='Guest information')
+    }
+)
+
+generate_qr_model = api.model(
+    'Generate qr model', {
+        'qr': fields.String(required=True, description='QR code encoded in base64')
     }
 )
 
@@ -68,3 +78,40 @@ class Scan(Resource):
             log.info(f'Error during sending notification for {user_id = } via websocket: {e}')
             
         return {}, 200
+
+@api.route('/generator')
+class Generator(Resource):
+    @api.marshal_with(generate_qr_model, code=200)
+    @api.response(401, 'Invalid credentials')
+    @api.response(500, 'Internal Server Error')
+    @jwt_required()
+    def get(self):
+        try:
+            # Pobranie informacji o zalogowanym użytkowniku (wymaga JWT)
+            user_id = get_jwt_identity()
+
+            # Generowanie kodu QR z URL do redirectera
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr_data = f"http://localhost:5002/pet-book/?id={user_id}"
+            qr.add_data(qr_data)
+            qr.make(fit=True)
+
+            # Konwertowanie obrazu QR do formatu base64
+            img = qr.make_image(fill_color="black", back_color="white")
+            buffered = BytesIO()
+            img.save(buffered, format="PNG")
+            qr_encoded = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+            # Zwracanie zakodowanego obrazu QR w odpowiedzi
+            return {'qr': qr_encoded}, 200
+
+        except Exception as e:
+            # Logowanie błędu i zwrócenie odpowiedzi 500
+            log.error(f"Error generating QR code: {e}")
+            api.abort(500, 'Internal Server Error')
+  
