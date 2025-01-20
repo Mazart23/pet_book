@@ -62,7 +62,7 @@ const QRCodeGenerator = () => {
 
             <button
               onClick={downloadQRCode}
-              className="mt-4 px-6 py-2 bg-blue-500 text-white font-bold rounded hover:bg-blue-600 transition"
+              className="mt-4 px-6 py-2 bg-green-500 text-white font-bold rounded hover:bg-blue-green transition"
             >
               Download QR Code
             </button>
