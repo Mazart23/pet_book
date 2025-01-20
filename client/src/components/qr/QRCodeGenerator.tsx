@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getGeneratedQr } from "@/app/Api";
 
 const QRCodeGenerator = () => {
@@ -8,26 +8,26 @@ const QRCodeGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generateQRCode = async () => {
+  useEffect(() => {
     setLoading(true);
     setError(null);
 
-    try {
-      // Wywołanie API w celu wygenerowania kodu QR
-      const qr = await getGeneratedQr(""); // Pusty token, aby działało bez logowania
-      setQrCode(qr);
-    } catch (err) {
-      setError("Failed to generate QR code. Please try again.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    getGeneratedQr("")
+      .then((qr) => {
+        setQrCode(qr);
+      })
+      .catch((err) => {
+        setError("Failed to generate QR code. Please try again.");
+        console.error(err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []); // Efekt wywoływany tylko raz przy ładowaniu komponentu
 
   const downloadQRCode = () => {
     if (!qrCode) return;
 
-    // Tworzenie linku do pobrania obrazu
     const link = document.createElement("a");
     link.href = `data:image/png;base64,${qrCode}`;
     link.download = "qrcode.png";
@@ -36,16 +36,10 @@ const QRCodeGenerator = () => {
 
   return (
     <div className="container mx-auto px-4 py-16">
-      <h1 className="text-3xl font-bold text-center mb-10">Generate Your QR Code</h1>
+      <h1 className="text-3xl font-bold text-center mb-10">Your QR Code</h1>
 
       <div className="flex flex-col items-center">
-        <button
-          onClick={generateQRCode}
-          className="px-6 py-2 bg-green-500 text-white font-bold rounded hover:bg-green-600 transition"
-          disabled={loading}
-        >
-          {loading ? "Generating..." : "Generate QR Code"}
-        </button>
+        {loading && <p>Loading...</p>}
 
         {qrCode && (
           <div className="mt-6 flex flex-col items-center">

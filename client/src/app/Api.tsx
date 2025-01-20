@@ -371,21 +371,4 @@ export async function getGeneratedQr(token?: string) {
 }
 
 
-/**
- * Wysyła dane zeskanowanego QR code do backendu
- */
-export async function scanQr(token: string, scanData: Record<string, any>) {
-  await servicesWait();
-  return apiClient
-    .post(`${services.controller.url}/qr/scan`, scanData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    .then((response) => response.data)
-    .catch((error) => {
-      console.error("Error scanning QR code:", error.response?.data || error.message);
-      throw error;
-    });
-}
 
