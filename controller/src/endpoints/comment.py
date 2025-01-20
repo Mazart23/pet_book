@@ -145,6 +145,8 @@ class Comment(Resource):
             log.info('User owner not found')
             api.abort(404, "User not found")
         
+        user_owner_id = str(user_owner_id)
+
         user = queries.get_user_by_id(user_id)
         
         if not user:

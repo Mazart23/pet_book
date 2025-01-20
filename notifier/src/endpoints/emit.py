@@ -112,7 +112,7 @@ class Reaction(Resource):
 
 @api.route('/comment')
 class Comment(Resource):
-    @api.expect(comment_input_model, validate=True)
+    @api.expect(comment_input_model, validate=False)
     @api.response(200, 'OK')
     @api.response(400, 'Bad Request')
     def post(self):
