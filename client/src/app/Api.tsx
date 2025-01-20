@@ -340,6 +340,20 @@ export async function fetchUserByUsername(username) {
     });
 }
 
+export async function searchRequestedResults(query: string, type: string) {
+  await servicesWait();
+  return apiClient
+    .get(`${services.controller.url}/post/search`, {
+      params: { query, type},
+    })
+    .then((response) => {
+      return response.data;
+    })
+    .catch((error) => {
+      throw error;
+    });
+}
+
 export async function createPost(token, formData: FormData) {
   await servicesWait();
 
