@@ -83,7 +83,7 @@ class Queries(MongoDBConnect):
             users = list(self.db['users'].find(filter, projection))
             return users
         except Exception as e:
-            print(f'Error fetching users: {e}')
+            log.debug(f'Error fetching users: {e}')
             return []
 
         
@@ -514,15 +514,35 @@ class Queries(MongoDBConnect):
             return False
 
     def remove_notification(self, notification_type: str, user_id: str, notification_id: str) -> bool:
-        try:          
-            delete_result = self.update_one(
-                f'{notification_type}s',
-                {
-                    "user_id": ObjectId(user_id),
-                    "_id": ObjectId(notification_id)
-                },
-                {'$set': {'is_notification': False}}
-            )
+        try:
+            if notification_type in {'comment', 'reaction'}:
+                result = self.find_one(f'{notification_type}s', {"_id": ObjectId(notification_id)})
+                
+                if not result:
+                    return False
+
+                post_result = self.find_one(f'posts', {"_id": result.get('post_id')})
+
+                if not post_result or str(post_result.get('user_id')) != user_id:
+                    return False
+                
+                delete_result = self.update_one(
+                    f'{notification_type}s',
+                    {
+                        "_id": ObjectId(notification_id)
+                    },
+                    {'$set': {'is_notification': False}}
+                )
+
+            else:
+                delete_result = self.update_one(
+                    f'{notification_type}s',
+                    {
+                        "user_id": ObjectId(user_id),
+                        "_id": ObjectId(notification_id)
+                    },
+                    {'$set': {'is_notification': False}}
+                )
             
             if delete_result.modified_count == 0:
                 log.info(f"Notification not removed for {user_id}, {notification_id = }")

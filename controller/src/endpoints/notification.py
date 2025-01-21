@@ -107,7 +107,7 @@ class Notification(Resource):
         
         queries = db()
         raw_results = queries.get_notifications(user_id, last_timestamp, quantity)
-        print(raw_results)
+
         if raw_results is False:
             log.info('Problem during getting notifications')
             api.abort(500, 'Database Error')
