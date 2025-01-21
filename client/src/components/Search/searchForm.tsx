@@ -167,7 +167,7 @@ const SearchPage = () => {
         )}
         {displayedPosts.length > 0 && searchType === "content" && (
           <>
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
               {displayedPosts.map((post) => (
                 <Post key={post.id} post={post} />
               ))}
