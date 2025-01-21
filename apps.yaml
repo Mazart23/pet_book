@@ -1,0 +1,28 @@
+services:
+  client:
+    http: "http"
+    ip_host: "localhost"
+    ip: "client"
+    port: 3000
+
+  controller:
+    http: "http"
+    ip_host: "localhost"
+    ip: "controller"
+    port: 5001
+
+  redirecter:
+    http: "http"
+    ip_host: "localhost"
+    ip: "redirecter"
+    port: 5002
+
+  notifier:
+    http: "http"
+    ip_host: "localhost"
+    ip: "notifier"
+    port: 5003
+
+external:
+  imgur:
+    url: "https://api.imgur.com/3/image"

@@ -1,0 +1,86 @@
+version: '3.8'
+
+networks:
+  petbook_network:
+    driver: bridge
+
+services:
+
+  controller:
+    build:
+      context: ./controller
+      dockerfile: Dockerfile
+    #restart: always
+    container_name: PB-controller
+    environment:
+      PYTHONUNBUFFERED: 1
+    networks:
+      - petbook_network
+    ports:
+      - "5001:5001"
+    env_file:
+      - "./db.env"
+      - "./controller/jwt.env"
+    volumes:
+      - "./apps.yaml:/app/config/apps.yaml"
+      - "./controller/logs:/app/logs"
+
+  redirecter:
+    build:
+      context: ./redirecter
+      dockerfile: Dockerfile
+    #restart: always
+    container_name: PB-redirecter
+    environment:
+      PYTHONUNBUFFERED: 1
+    networks:
+      - petbook_network
+    ports:
+      - "5002:5002"
+    env_file:
+      - "./db.env"
+    volumes:
+      - "./apps.yaml:/app/config/apps.yaml"
+      - "./redirecter/logs:/app/logs"
+
+  notifier:
+    build:
+      context: ./notifier
+      dockerfile: Dockerfile
+    #restart: always
+    container_name: PB-notifier
+    environment:
+      PYTHONUNBUFFERED: 1
+    networks:
+      - petbook_network
+    ports:
+      - "5003:5003"
+    env_file:
+      - "./notifier/jwt.env"
+    volumes:
+      - "./apps.yaml:/app/config/apps.yaml"
+      - "./notifier/logs:/app/logs"
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: PB-client
+    networks:
+      - petbook_network
+    ports:
+      - "3000:3000"
+    depends_on:
+      - controller
+      - redirecter
+      - notifier
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001"]
+      interval: 5s
+      retries: 10
+    logging:
+      #limit logs to 300MB (3 rotations of 100M each)
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
